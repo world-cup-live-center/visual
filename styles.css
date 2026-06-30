@@ -245,6 +245,17 @@ details[open] > summary .step-sub {
   color: rgba(255, 255, 255, 0.70);
 }
 
+/* Adim menusu: ana yazilar HER ZAMAN beyaz (eskiden yalnizca acikken beyazdi).
+   Numara rozeti varsayilan soluk kalir, yalnizca acilinca kirmiziya doner. */
+.sidebar-scroll details > summary {
+  color: #ffffff;
+}
+
+/* Alt aciklama: soluk gri yerine yumusak beyaz — hiyerarsi korunur, soluk gorunmez */
+.sidebar-scroll details > summary .step-sub {
+  color: rgba(255, 255, 255, 0.6);
+}
+
 /* Sidebar kaydirma cubugu */
 .sidebar-scroll {
   scrollbar-width: thin;

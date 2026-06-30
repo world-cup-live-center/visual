@@ -23,14 +23,27 @@ const contentTypes = {
   ".webm": "video/webm"
 };
 
+function looksLikeFilePath(candidate) {
+  // POSIX mutlak yol, Windows surucu harfi (C:\...) ya da icinde ayrac olan her sey.
+  return (
+    path.isAbsolute(candidate) ||
+    /^[a-zA-Z]:[\\/]/.test(candidate) ||
+    /[\\/]/.test(candidate)
+  );
+}
+
 function resolveBinary(candidates) {
   for (const candidate of candidates.filter(Boolean)) {
-    if (path.isAbsolute(candidate)) {
+    if (looksLikeFilePath(candidate)) {
+      // Gercek bir dosya yolu adayi: yalnizca dosya gercekten varsa kullan.
+      // (Linux'ta "C:\\ffmpeg\\..." gibi Windows yollari burada elenir; boylece
+      //  "ffmpeg" / "ffprobe" PATH fallback'ine duser.)
       if (fs.existsSync(candidate)) {
         return candidate;
       }
       continue;
     }
+    // Ciplak komut ("ffmpeg"): PATH uzerinden calistirilir.
     return candidate;
   }
   return null;
@@ -164,6 +177,20 @@ function runProcess(command, args) {
       reject(new Error(stderr.trim() || `${command} basarisiz oldu (${exitCode}).`));
     });
   });
+}
+
+async function probeBinary(bin) {
+  // Binary'yi gercekten calistirip versiyonunu alir. fs.existsSync ciplak
+  // komutlar ("ffmpeg") icin yaniltici oldugundan kesin sonuc icin bunu kullaniriz.
+  if (!bin) {
+    return { ok: false, error: "yol bulunamadi" };
+  }
+  try {
+    const { stdout } = await runProcess(bin, ["-version"]);
+    return { ok: true, version: (stdout.split("\n")[0] || "").trim() };
+  } catch (error) {
+    return { ok: false, error: (error.message || "").split("\n")[0] };
+  }
 }
 
 async function ensureTempExportDir() {
@@ -441,12 +468,20 @@ const server = http.createServer((request, response) => {
   const requestUrl = new URL(request.url, `http://${request.headers.host || "localhost"}`);
 
   if (request.method === "GET" && requestUrl.pathname === "/api/debug") {
-    sendJson(response, 200, {
-      ffmpegPath,
-      ffprobePath,
-      ffmpegExists: ffmpegPath ? fs.existsSync(ffmpegPath) : false,
-      ffprobeExists: ffprobePath ? fs.existsSync(ffprobePath) : false
-    });
+    Promise.all([probeBinary(ffmpegPath), probeBinary(ffprobePath)])
+      .then(([ffmpeg, ffprobe]) => {
+        sendJson(response, 200, {
+          platform: process.platform,
+          ffmpegPath,
+          ffprobePath,
+          ffmpeg,
+          ffprobe,
+          ready: ffmpeg.ok && ffprobe.ok
+        });
+      })
+      .catch((error) => {
+        sendJson(response, 500, { error: error.message });
+      });
     return;
   }
 

@@ -264,6 +264,20 @@ details[open] > summary .step-sub {
   box-shadow: 0 0 14px rgba(232, 23, 42, 0.4);
 }
 
+/* Hover efekti: tum adim kartlari + KULLANIM butonu. Baslik satirina gelince
+   cerceve kirmizilasir ve etrafinda hafif kirmizi glow olusur. */
+.sidebar-scroll details,
+.sidebar-scroll nav > a {
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sidebar-scroll details:has(> summary:hover),
+.sidebar-scroll nav > a:hover {
+  border-color: rgba(232, 23, 42, 0.45);
+  background-color: rgba(232, 23, 42, 0.06);
+  box-shadow: 0 0 0 1px rgba(232, 23, 42, 0.18), 0 8px 24px -8px rgba(232, 23, 42, 0.5);
+}
+
 /* Sidebar kaydirma cubugu */
 .sidebar-scroll {
   scrollbar-width: thin;

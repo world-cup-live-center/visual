@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="tr" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>MoS Rhythm | Muzik Visualizer</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              accent: "#e8172a",
+              accent2: "#b5101d",
+              mint: "#ff4d60",
+              gold: "#d8d8d8",
+              muted: "#7a7a7a",
+              cream: "#ffffff",
+              ink: "#050505"
+            },
+            fontFamily: {
+              display: ["Constantia", "Georgia", "serif"],
+              body: ["Bahnschrift", '"Trebuchet MS"', "Aptos", "sans-serif"]
+            }
+          }
+        }
+      };
+    </script>
+
+    <link rel="stylesheet" href="styles.css" />
+
+    <style type="text/tailwindcss">
+      .kicker {
+        @apply text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-mint;
+      }
+      .btn {
+        @apply inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-cream transition duration-200 hover:border-accent/40 hover:bg-accent/10 focus-visible:border-accent/40 focus-visible:outline-none;
+      }
+      .btn-primary {
+        @apply border-transparent bg-gradient-to-br from-accent to-accent2 font-bold text-white hover:from-[#ff1a2e] hover:to-accent;
+      }
+      .icon-btn {
+        @apply inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-cream transition hover:border-accent/50 hover:bg-accent/10 focus-visible:border-accent/50 focus-visible:outline-none;
+      }
+      .ctl {
+        @apply w-full cursor-pointer appearance-none rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 pr-10 text-sm text-cream transition hover:border-accent/40 focus-visible:border-accent/40 focus-visible:outline-none;
+      }
+      .field-label {
+        @apply mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted;
+      }
+      .chip {
+        @apply rounded-full border border-white/10 bg-black/45 px-3 py-1 text-xs text-cream backdrop-blur;
+      }
+      .stat {
+        @apply rounded-lg border border-white/10 bg-black/45 px-2.5 py-1.5 text-center backdrop-blur;
+      }
+      .step-num {
+        @apply flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xs font-semibold text-muted;
+      }
+      .toggle-card {
+        @apply flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 transition hover:border-accent/30 hover:bg-accent/5;
+      }
+      .stepper-btn {
+        @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-lg leading-none text-cream transition hover:border-accent/40 hover:bg-accent/10 active:scale-95 focus-visible:border-accent/40 focus-visible:outline-none;
+      }
+    </style>
+  </head>
+
+  <body class="min-h-screen bg-ink font-body text-cream antialiased lg:h-screen lg:overflow-hidden">
+    <div class="page-noise"></div>
+
+    <div class="flex min-h-screen flex-col lg:h-screen lg:flex-row-reverse lg:overflow-hidden">
+      <!-- ============ ONIZLEME (video) ============ -->
+      <section class="relative flex min-w-0 flex-col lg:flex-1">
+        <div
+          id="stage-shell"
+          class="stage-shell relative min-h-[52vh] flex-1 overflow-hidden lg:min-h-0"
+        >
+          <canvas id="visualizer-canvas" aria-label="Muzik visualizer canvasi"></canvas>
+
+          <!-- ust metrikler -->
+          <div class="pointer-events-none absolute right-3 top-3 z-20 grid grid-cols-3 gap-1.5 sm:grid-cols-6">
+            <div class="stat">
+              <span class="block text-[0.6rem] uppercase tracking-wider text-muted">Enerji</span>
+              <strong id="energy-value" class="block text-sm">0%</strong>
+            </div>
+            <div class="stat">
+              <span class="block text-[0.6rem] uppercase tracking-wider text-muted">Bass</span>
+              <strong id="bass-value" class="block text-sm">0%</strong>
+            </div>
+            <div class="stat">
+              <span class="block text-[0.6rem] uppercase tracking-wider text-muted">Mid</span>
+              <strong id="mid-value" class="block text-sm">0%</strong>
+            </div>
+            <div class="stat">
+              <span class="block text-[0.6rem] uppercase tracking-wider text-muted">High</span>
+              <strong id="high-value" class="block text-sm">0%</strong>
+            </div>
+            <div class="stat">
+              <span class="block text-[0.6rem] uppercase tracking-wider text-muted">Peak</span>
+              <strong id="peak-value" class="block text-sm">--</strong>
+            </div>
+            <div class="stat">
+              <span class="block text-[0.6rem] uppercase tracking-wider text-muted">BPM</span>
+              <strong id="bpm-value" class="block text-sm">--</strong>
+            </div>
+          </div>
+
+          <!-- aktif stil etiketi (sol alt) -->
+          <div class="pointer-events-none absolute bottom-4 left-4 z-20 flex flex-wrap gap-2">
+            <span id="style-badge" class="chip">Spectrum Bars</span>
+            <span id="palette-badge" class="chip">Amber Mint</span>
+            <span id="backdrop-badge" class="chip">Aurora Mist</span>
+          </div>
+
+          <!-- bos durum -->
+          <div
+            id="empty-state"
+            class="absolute left-1/2 top-1/2 z-30 w-[min(30rem,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-white/10 bg-black/55 px-6 py-5 text-center backdrop-blur-md"
+          >
+            <strong class="mb-1.5 block text-lg">Visual burada dogacak</strong>
+            <span class="block text-sm leading-relaxed text-muted">
+              Soldaki <b class="text-cream">1. Ses</b> adimindan bir muzik yukle, ardindan
+              oynat. Stil ve renkleri oynarken degistirebilirsin.
+            </span>
+          </div>
+        </div>
+
+        <!-- ============ TRANSPORT CUBUGU ============ -->
+        <div class="flex flex-wrap items-center gap-3 border-t border-white/10 bg-black/50 px-4 py-3 backdrop-blur-xl">
+          <!-- ana eylem grubu: oynat + kayit + indir yan yana -->
+          <div class="flex shrink-0 items-center gap-2">
+            <button id="play-toggle" class="btn btn-primary min-w-[6.5rem]" type="button">Oynat</button>
+            <button id="record-toggle" class="btn" type="button">Kaydi Baslat</button>
+            <a
+              id="download-link"
+              class="btn border-white/25 bg-white/8 no-underline hover:bg-white/15"
+              href="#"
+              hidden
+            >Indir</a>
+            <button id="loop-toggle" class="btn" type="button" title="Döngü (L)">Döngü</button>
+            <button id="snapshot-btn" class="btn" type="button" title="PNG Snapshot (S)">Snapshot</button>
+            <button id="quickclip-btn" class="btn" type="button" title="5 saniyelik video klip (C)">Klip</button>
+          </div>
+
+          <span id="time-value" class="shrink-0 text-sm tabular-nums text-muted">00:00 / 00:00</span>
+
+          <div
+            id="progress-track"
+            class="group relative mx-1 h-8 min-w-[3rem] flex-1 cursor-pointer touch-none overflow-hidden rounded-lg border border-white/10 bg-black/30"
+            role="slider"
+            aria-label="Parca konumu"
+          >
+            <canvas id="waveform-track" class="absolute inset-0 block w-full h-full" aria-hidden="true"></canvas>
+          </div>
+
+          <strong
+            id="recording-pill"
+            class="shrink-0 rounded-full border border-[#ff6050]/40 bg-[#ff6050]/20 px-3 py-1 text-xs text-[#ffe5df]"
+            hidden
+          >● Kayit</strong>
+
+          <div class="flex shrink-0 items-center gap-1.5">
+            <svg class="shrink-0 text-muted" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            </svg>
+            <input id="volume-slider" type="range" min="0" max="1" step="0.02" value="1" class="w-16 cursor-pointer" title="Ses seviyesi" aria-label="Ses seviyesi" />
+          </div>
+
+          <button id="fullscreen-toggle" class="icon-btn shrink-0" type="button" title="Tam ekran" aria-label="Tam ekran">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" />
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- ============ SOL SIDEBAR (ayarlar) ============ -->
+      <aside
+        class="sidebar-scroll flex shrink-0 flex-col border-white/10 bg-black/95 backdrop-blur-xl overflow-y-auto lg:h-screen lg:w-[368px] lg:border-r"
+      >
+        <!-- baslik -->
+        <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
+          <div class="flex items-center gap-3">
+            <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+              <defs><linearGradient id="logo-a" x1="0" y1="0" x2="30" y2="30" gradientUnits="userSpaceOnUse"><stop stop-color="#e8172a"/><stop offset="1" stop-color="#6e000c"/></linearGradient></defs>
+              <rect width="30" height="30" rx="7" fill="url(#logo-a)"/>
+              <rect x="4"  y="8"  width="3.5" height="15" rx="1.75" fill="white"/>
+              <rect x="10" y="16" width="3.5" height="7"  rx="1.75" fill="white" opacity=".6"/>
+              <rect x="14.5" y="11" width="3.5" height="12" rx="1.75" fill="white" opacity=".85"/>
+              <rect x="20" y="16" width="3.5" height="7"  rx="1.75" fill="white" opacity=".6"/>
+              <rect x="25" y="8"  width="2.5" height="15" rx="1.25" fill="white"/>
+            </svg>
+            <div>
+              <p class="kicker">Yerel studyo</p>
+              <h1 class="font-display text-xl leading-tight">MoS Rhythm</h1>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <a href="user-manual-2.html" target="_blank" title="Kullanım Kılavuzu" class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-muted transition hover:border-accent/40 hover:text-cream">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </a>
+            <span class="chip border-accent/40 text-accent">Visualizer</span>
+          </div>
+        </div>
+
+        <!-- durum -->
+        <div class="px-5 pt-4">
+          <div
+            id="status-banner"
+            class="status-banner w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-muted"
+            data-state="idle"
+          >
+            Baslamak icin bir muzik dosyasi sec veya surukleyip birak.
+          </div>
+        </div>
+
+        <!-- adimlar -->
+        <nav class="flex flex-col gap-2 px-3 py-4">
+          <!-- 1. SES -->
+          <details class="rounded-2xl border border-white/10 bg-white/[0.02]" open>
+            <summary class="flex items-center gap-3 px-3 py-3 text-muted">
+              <span class="step-num">1</span>
+              <span class="flex-1">
+                <span class="block font-semibold">Ses</span>
+                <span class="step-sub block text-xs text-muted">Muzigi yukle</span>
+              </span>
+              <svg class="step-chevron text-muted" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+            </summary>
+
+            <div class="flex flex-col gap-3 px-3 pb-4">
+              <label
+                id="file-drop"
+                class="drop-zone relative flex cursor-pointer flex-col gap-1.5 rounded-xl border border-dashed border-white/20 bg-white/[0.03] p-4 transition duration-200 hover:border-accent/50 focus-visible:border-accent/50 focus-visible:outline-none"
+                for="audio-upload"
+                tabindex="0"
+              >
+                <input id="audio-upload" type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac" hidden />
+                <span class="kicker">MP3 · WAV · M4A · AAC · OGG · FLAC</span>
+                <strong class="font-display text-base">Dosya sec veya birak</strong>
+                <span class="text-xs leading-relaxed text-muted">Muzik yalnizca bu tarayicida islenir, disari gonderilmez.</span>
+              </label>
+
+              <div class="grid gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <div>
+                  <span class="field-label">Parca</span>
+                  <strong id="track-name" class="block font-display text-sm">Henuz secilmedi</strong>
+                </div>
+                <div>
+                  <span class="field-label">Bilgi</span>
+                  <strong id="track-meta" class="block font-display text-sm text-muted">Sure ve boyut burada gorunecek</strong>
+                </div>
+              </div>
+
+              <audio id="audio-player" class="w-full" controls preload="metadata"></audio>
+              <button id="mic-toggle" class="btn w-full" type="button">Mikrofon Baslat</button>
+            </div>
+          </details>
+
+          <!-- 2. STIL -->
+          <details class="rounded-2xl border border-white/10 bg-white/[0.02]">
+            <summary class="flex items-center gap-3 px-3 py-3 text-muted">
+              <span class="step-num">2</span>
+              <span class="flex-1">
+                <span class="block font-semibold">Stil</span>
+                <span class="step-sub block text-xs text-muted">Visual dili</span>
+              </span>
+              <svg class="step-chevron text-muted" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+            </summary>
+
+            <div class="flex flex-col gap-3 px-3 pb-4">
+              <div>
+                <span class="field-label">Visualizer modu</span>
+                <select id="style-select" class="ctl">
+                  <option value="bars">Spectrum Bars</option>
+                  <option value="radial">Halo Ring</option>
+                  <option value="wave">Wave Ribbon</option>
+                  <option value="polygon">Geometry Pulse</option>
+                  <option value="mirror">Mirror Bars</option>
+                  <option value="spiral">Spiral Bloom</option>
+                  <option value="tunnel">Neon Tunnel</option>
+                  <option value="particles">Particle Burst</option>
+                  <option value="lattice">Pulse Lattice</option>
+                  <option value="area">Aurora Wave</option>
+                  <option value="matrix">Pulse Grid</option>
+                  <option value="blob">Liquid Bloom</option>
+                  <option value="dots">Dot Stream</option>
+                  <option value="oscilloscope">Oscilloscope</option>
+                  <option value="stereo">Stereo Field</option>
+                  <option value="neonstring">Neon String</option>
+                  <option value="dotline">Dot Line</option>
+                  <option value="mirror3d">Mirror 3D</option>
+                  <option value="petalburst">Petal Burst</option>
+                  <option value="spectrogram">Spectrogram</option>
+                  <option value="ripplebeat">Ripple Beat</option>
+                  <option value="dnahelix">DNA Helix</option>
+                </select>
+              </div>
+              <div>
+                <span class="field-label">Renk paleti</span>
+                <select id="palette-select" class="ctl">
+                  <option value="redWhite" selected>Kirmizi Beyaz</option>
+                  <option value="amberMint">Amber Mint</option>
+                  <option value="neonCity">Neon City</option>
+                  <option value="solarDusk">Solar Dusk</option>
+                  <option value="frostPulse">Frost Pulse</option>
+                  <option value="monoWhite">Mono White</option>
+                  <option value="custom">Ozel Palet</option>
+                </select>
+              </div>
+
+              <div id="custom-palette-row" hidden>
+                <div class="grid grid-cols-3 gap-2">
+                  <div>
+                    <span class="field-label">Birincil</span>
+                    <input id="custom-primary" type="color" value="#ff9754" class="w-full h-9 cursor-pointer rounded-xl border border-white/10 bg-transparent" />
+                  </div>
+                  <div>
+                    <span class="field-label">Ikincil</span>
+                    <input id="custom-secondary" type="color" value="#85e3c4" class="w-full h-9 cursor-pointer rounded-xl border border-white/10 bg-transparent" />
+                  </div>
+                  <div>
+                    <span class="field-label">Vurgu</span>
+                    <input id="custom-accent" type="color" value="#ffd37a" class="w-full h-9 cursor-pointer rounded-xl border border-white/10 bg-transparent" />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <span class="field-label">Sahne arkaplani</span>
+                <select id="backdrop-select" class="ctl">
+                  <option value="aurora">Aurora Mist</option>
+                  <option value="grid">Laser Grid</option>
+                  <option value="void">Deep Void</option>
+                  <option value="custom">Kendi Gorselin</option>
+                </select>
+              </div>
+
+              <div id="backdrop-upload-row" hidden>
+                <span class="field-label">Arkaplan gorseli</span>
+                <label
+                  id="backdrop-drop"
+                  class="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-white/20 bg-white/[0.03] p-3 transition hover:border-accent/50 focus-visible:border-accent/50 focus-visible:outline-none"
+                  for="backdrop-image-upload"
+                  tabindex="0"
+                >
+                  <input id="backdrop-image-upload" type="file" accept="image/*,.png,.jpg,.jpeg,.webp" hidden />
+                  <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15l-5-5L5 21" /><path d="M3 16V5a2 2 0 0 1 2-2h11" /><circle cx="9" cy="9" r="2" /><path d="M17 3v6m3-3h-6" /></svg>
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <strong id="backdrop-image-name" class="block truncate text-sm">Gorsel sec veya birak</strong>
+                    <small class="text-xs text-muted">PNG · JPG · WEBP — canvas'a sigdirilir</small>
+                  </span>
+                  <button id="backdrop-image-clear" type="button" class="shrink-0 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-muted transition hover:border-[#ff6050]/40 hover:text-[#ffd8d1]" hidden>Kaldir</button>
+                </label>
+
+                <div class="mt-3">
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="text-muted">Karartma siddeti</span>
+                    <strong id="backdrop-dim-value">34%</strong>
+                  </div>
+                  <input id="backdrop-dim" class="mt-2" type="range" min="0" max="0.8" step="0.02" value="0.34" />
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <!-- 3. ANALIZ -->
+          <details class="rounded-2xl border border-white/10 bg-white/[0.02]">
+            <summary class="flex items-center gap-3 px-3 py-3 text-muted">
+              <span class="step-num">3</span>
+              <span class="flex-1">
+                <span class="block font-semibold">Analiz</span>
+                <span class="step-sub block text-xs text-muted">Hassasiyet ve glow</span>
+              </span>
+              <svg class="step-chevron text-muted" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+            </summary>
+
+            <div class="flex flex-col gap-4 px-3 pb-4">
+              <div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-muted">Bant yogunlugu</span>
+                  <strong id="bar-count-value">88 bant</strong>
+                </div>
+                <input id="bar-count" class="mt-2" type="range" min="32" max="144" step="4" value="88" />
+              </div>
+              <div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-muted">Hassasiyet</span>
+                  <strong id="sensitivity-value">1.20x</strong>
+                </div>
+                <input id="sensitivity" class="mt-2" type="range" min="0.6" max="1.8" step="0.05" value="1.2" />
+              </div>
+              <div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-muted">Akis yumusatma</span>
+                  <strong id="smoothing-value">0.82</strong>
+                </div>
+                <input id="smoothing" class="mt-2" type="range" min="0.55" max="0.95" step="0.01" value="0.82" />
+              </div>
+              <div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-muted">Glow seviyesi</span>
+                  <strong id="glow-value">28 px</strong>
+                </div>
+                <input id="glow" class="mt-2" type="range" min="8" max="48" step="1" value="28" />
+              </div>
+            </div>
+          </details>
+
+          <!-- 4. INCE AYAR -->
+          <details class="rounded-2xl border border-white/10 bg-white/[0.02]">
+            <summary class="flex items-center gap-3 px-3 py-3 text-muted">
+              <span class="step-num">4</span>
+              <span class="flex-1">
+                <span class="block font-semibold">Ince ayarlar</span>
+                <span class="step-sub block text-xs text-muted">Visual boyut ve konum</span>
+              </span>
+              <svg class="step-chevron text-muted" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+            </summary>
+
+            <div class="flex flex-col gap-4 px-3 pb-4">
+              <div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-muted">Visual boyutu</span>
+                  <strong id="visual-scale-value">1.00x</strong>
+                </div>
+                <div class="mt-2 flex items-center gap-2">
+                  <button type="button" class="stepper-btn" data-step-target="visual-scale" data-step-dir="-1" aria-label="Kucult">&minus;</button>
+                  <input id="visual-scale" class="flex-1" type="range" min="0.5" max="1.4" step="0.05" value="1" />
+                  <button type="button" class="stepper-btn" data-step-target="visual-scale" data-step-dir="1" aria-label="Buyut">+</button>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-muted">Visual yatay konum</span>
+                  <strong id="visual-offset-x-value">0%</strong>
+                </div>
+                <div class="mt-2 flex items-center gap-2">
+                  <button type="button" class="stepper-btn" data-step-target="visual-offset-x" data-step-dir="-1" aria-label="Sola">&minus;</button>
+                  <input id="visual-offset-x" class="flex-1" type="range" min="-0.5" max="0.5" step="0.01" value="0" />
+                  <button type="button" class="stepper-btn" data-step-target="visual-offset-x" data-step-dir="1" aria-label="Saga">+</button>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-muted">Visual dikey konum</span>
+                  <strong id="visual-offset-y-value">0%</strong>
+                </div>
+                <div class="mt-2 flex items-center gap-2">
+                  <button type="button" class="stepper-btn" data-step-target="visual-offset-y" data-step-dir="-1" aria-label="Yukari">&minus;</button>
+                  <input id="visual-offset-y" class="flex-1" type="range" min="-0.5" max="0.5" step="0.01" value="0" />
+                  <button type="button" class="stepper-btn" data-step-target="visual-offset-y" data-step-dir="1" aria-label="Asagi">+</button>
+                </div>
+              </div>
+
+              <div class="flex gap-2 pt-1">
+                <button id="visual-center" type="button" class="btn flex-1">Ortala</button>
+                <button id="visual-reset" type="button" class="btn flex-1">Sifirla</button>
+              </div>
+            </div>
+          </details>
+
+          <!-- 5. ALBUM BILGILERI -->
+          <details class="rounded-2xl border border-white/10 bg-white/[0.02]">
+            <summary class="flex items-center gap-3 px-3 py-3 text-muted">
+              <span class="step-num">5</span>
+              <span class="flex-1">
+                <span class="block font-semibold">Album Bilgileri</span>
+                <span class="step-sub block text-xs text-muted">Track bilgisi ve yazı</span>
+              </span>
+              <svg class="step-chevron text-muted" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+            </summary>
+
+            <div class="flex flex-col gap-3 px-3 pb-4">
+              <label class="toggle-card" for="overlay-text-toggle">
+                <input id="overlay-text-toggle" class="mt-0.5 h-4 w-4 cursor-pointer accent-accent" type="checkbox" />
+                <span class="grid gap-0.5">
+                  <strong class="text-sm">Canvas'a yaz</strong>
+                  <small class="text-xs leading-relaxed text-muted">Arka plan olmadan, saf metin olarak cizilir.</small>
+                </span>
+              </label>
+              <div>
+                <span class="field-label">Baslik</span>
+                <input id="overlay-title" type="text" placeholder="Sarki basligi..." class="ctl pr-3.5" />
+              </div>
+              <div>
+                <span class="field-label">Sanatci</span>
+                <input id="overlay-artist" type="text" placeholder="Sanatci adi..." class="ctl pr-3.5" />
+              </div>
+              <div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-muted">Yazi buyuklugu</span>
+                  <strong id="overlay-text-size-value">36 px</strong>
+                </div>
+                <input id="overlay-text-size" class="mt-2" type="range" min="14" max="96" step="2" value="36" />
+              </div>
+              <div class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5">
+                <span class="flex-1 text-xs font-medium uppercase tracking-wider text-muted">Yazi rengi</span>
+                <input id="overlay-text-color" type="color" value="#ffffff"
+                  class="h-8 w-12 cursor-pointer rounded-lg border border-white/10 bg-transparent p-0.5" />
+              </div>
+              <div>
+                <span class="field-label">Konum</span>
+                <select id="overlay-position" class="ctl">
+                  <option value="bottom-left">Sol alt</option>
+                  <option value="bottom-center">Alt orta</option>
+                  <option value="bottom-right">Sag alt</option>
+                  <option value="top-left">Sol ust</option>
+                  <option value="top-center">Ust orta</option>
+                </select>
+              </div>
+              <div>
+                <span class="field-label">Animasyon</span>
+                <select id="overlay-animation" class="ctl">
+                  <option value="none">Yok</option>
+                  <option value="fade">Belir</option>
+                  <option value="slide-up">Yukari Kayma</option>
+                  <option value="slide-left">Soldan Kayma</option>
+                  <option value="typewriter">Daktilo</option>
+                  <option value="pulse">Nefes</option>
+                  <option value="glow-beat">Beat Parlamasi</option>
+                  <option value="float">Yuzer</option>
+                </select>
+              </div>
+            </div>
+          </details>
+
+          <!-- 6. ALBUM KAPAGI -->
+          <details class="rounded-2xl border border-white/10 bg-white/[0.02]">
+            <summary class="flex items-center gap-3 px-3 py-3 text-muted">
+              <span class="step-num">6</span>
+              <span class="flex-1">
+                <span class="block font-semibold">Album Kapagi</span>
+                <span class="step-sub block text-xs text-muted">Kapak · beat flash · reaktif renk</span>
+              </span>
+              <svg class="step-chevron text-muted" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+            </summary>
+            <div class="flex flex-col gap-3 px-3 pb-4">
+
+              <label class="toggle-card" for="beat-flash-toggle">
+                <input id="beat-flash-toggle" class="mt-0.5 h-4 w-4 cursor-pointer accent-accent" type="checkbox" />
+                <span class="grid gap-0.5">
+                  <strong class="text-sm">Beat Flash</strong>
+                  <small class="text-xs leading-relaxed text-muted">Her bass vurusunda ekrana anlik parlaklık dalgas.</small>
+                </span>
+              </label>
+
+              <label class="toggle-card" for="reactive-hue-toggle">
+                <input id="reactive-hue-toggle" class="mt-0.5 h-4 w-4 cursor-pointer accent-accent" type="checkbox" />
+                <span class="grid gap-0.5">
+                  <strong class="text-sm">Reaktif Renk</strong>
+                  <small class="text-xs leading-relaxed text-muted">Renk tonu muzikle birlikte yavaska kayar.</small>
+                </span>
+              </label>
+
+              <div>
+                <span class="field-label">Albüm Kapağı Gorseli</span>
+                <label
+                  id="album-art-drop"
+                  class="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-white/20 bg-white/[0.03] p-3 transition hover:border-accent/50"
+                  for="album-art-input"
+                >
+                  <input id="album-art-input" type="file" accept="image/*,.png,.jpg,.jpeg,.webp" hidden />
+                  <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <strong id="album-art-name" class="block truncate text-sm">Gorsel sec</strong>
+                    <small class="text-xs text-muted">PNG · JPG · WEBP</small>
+                  </span>
+                  <button id="album-art-clear" type="button" class="shrink-0 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-muted transition hover:border-[#ff6050]/40 hover:text-[#ffd8d1]" hidden>Kaldir</button>
+                </label>
+              </div>
+
+              <div id="album-art-options" hidden class="flex flex-col gap-3">
+                <div>
+                  <span class="field-label">Kapak tipi</span>
+                  <select id="album-art-mode" class="ctl">
+                    <option value="center">Merkez daire</option>
+                    <option value="backdrop">Arka plan (bulanık)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="text-muted">Kapak boyutu</span>
+                    <strong id="album-art-scale-value">1.00x</strong>
+                  </div>
+                  <div class="mt-2 flex items-center gap-2">
+                    <button type="button" class="stepper-btn" data-step-target="album-art-scale" data-step-dir="-1">&minus;</button>
+                    <input id="album-art-scale" class="flex-1" type="range" min="0.4" max="3" step="0.05" value="1" />
+                    <button type="button" class="stepper-btn" data-step-target="album-art-scale" data-step-dir="1">+</button>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="text-muted">Yatay konum</span>
+                    <strong id="album-art-offset-x-value">0%</strong>
+                  </div>
+                  <div class="mt-2 flex items-center gap-2">
+                    <button type="button" class="stepper-btn" data-step-target="album-art-offset-x" data-step-dir="-1">&minus;</button>
+                    <input id="album-art-offset-x" class="flex-1" type="range" min="-0.5" max="0.5" step="0.01" value="0" />
+                    <button type="button" class="stepper-btn" data-step-target="album-art-offset-x" data-step-dir="1">+</button>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="text-muted">Dikey konum</span>
+                    <strong id="album-art-offset-y-value">0%</strong>
+                  </div>
+                  <div class="mt-2 flex items-center gap-2">
+                    <button type="button" class="stepper-btn" data-step-target="album-art-offset-y" data-step-dir="-1">&minus;</button>
+                    <input id="album-art-offset-y" class="flex-1" type="range" min="-0.5" max="0.5" step="0.01" value="0" />
+                    <button type="button" class="stepper-btn" data-step-target="album-art-offset-y" data-step-dir="1">+</button>
+                  </div>
+                </div>
+
+                <button id="album-art-reset" type="button" class="btn w-full text-xs">Konumu Sıfırla</button>
+              </div>
+
+            </div>
+          </details>
+
+          <!-- 7. PRESETLER -->
+          <details class="rounded-2xl border border-white/10 bg-white/[0.02]">
+            <summary class="flex items-center gap-3 px-3 py-3 text-muted">
+              <span class="step-num">&#9733;</span>
+              <span class="flex-1">
+                <span class="block font-semibold">Presetler</span>
+                <span class="step-sub block text-xs text-muted">Ayarlari kaydet / yukle</span>
+              </span>
+              <svg class="step-chevron text-muted" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+            </summary>
+
+            <div class="flex flex-col gap-3 px-3 pb-4">
+              <div class="flex gap-2">
+                <input id="preset-name" type="text" placeholder="Preset adi..." class="ctl flex-1" />
+                <button id="preset-save" type="button" class="btn shrink-0">Kaydet</button>
+              </div>
+              <div id="preset-list" class="flex flex-col gap-1.5">
+                <p class="text-xs text-muted text-center py-2">Henuz preset yok.</p>
+              </div>
+            </div>
+          </details>
+
+          <!-- 8. CIKTI -->
+          <details class="rounded-2xl border border-white/10 bg-white/[0.02]">
+            <summary class="flex items-center gap-3 px-3 py-3 text-muted">
+              <span class="step-num">7</span>
+              <span class="flex-1">
+                <span class="block font-semibold">Cikti</span>
+                <span class="step-sub block text-xs text-muted">Export ayarlari</span>
+              </span>
+              <svg class="step-chevron text-muted" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+            </summary>
+
+            <div class="flex flex-col gap-3 px-3 pb-4">
+              <div>
+                <span class="field-label">Export zemini</span>
+                <select id="export-bg-select" class="ctl">
+                  <option value="normal">Normal Backdrop</option>
+                  <option value="blend">Blend on Black</option>
+                  <option value="transparent">Alpha Demo</option>
+                  <option value="green">Green Screen</option>
+                  <option value="blue">Blue Screen</option>
+                  <option value="matte">Luma Matte</option>
+                </select>
+              </div>
+              <div>
+                <span class="field-label">Kayit cozunurlugu</span>
+                <select id="export-resolution-select" class="ctl">
+                  <option value="1080">1080p (Recommended)</option>
+                  <option value="1440">1440p</option>
+                  <option value="2160">2160p</option>
+                  <option value="preview">Preview ile ayni</option>
+                </select>
+              </div>
+              <div>
+                <span class="field-label">Kare hizi</span>
+                <select id="export-fps-select" class="ctl">
+                  <option value="30">30 fps (Onerilen — kucuk dosya)</option>
+                  <option value="60">60 fps (akici, ~2x dosya)</option>
+                </select>
+              </div>
+
+              <label class="toggle-card" for="overlay-clean-toggle">
+                <input id="overlay-clean-toggle" class="mt-0.5 h-4 w-4 cursor-pointer accent-accent" type="checkbox" />
+                <span class="grid gap-0.5">
+                  <strong class="text-sm">Overlay temiz cizim</strong>
+                  <small class="text-xs leading-relaxed text-muted">Glow ve ic dolgulari azaltir; keying / matte icin temiz sonuc.</small>
+                </span>
+              </label>
+
+              <label class="toggle-card" for="canvas-label-toggle">
+                <input id="canvas-label-toggle" class="mt-0.5 h-4 w-4 cursor-pointer accent-accent" type="checkbox" />
+                <span class="grid gap-0.5">
+                  <strong class="text-sm">Canvas basligini goster</strong>
+                  <small class="text-xs leading-relaxed text-muted">Mod adi ve enerji rozeti canvas ustune cizilir.</small>
+                </span>
+              </label>
+
+              <p class="text-[0.7rem] leading-relaxed text-muted">
+                Alpha Demo modunda gorsel saydam arka planla kaydedilip MOV olarak cikti verilir.
+                Export ayarini kayit sirasinda degistirirsen yeni secim sonraki kayda uygulanir.
+              </p>
+            </div>
+          </details>
+        </nav>
+
+        <div class="mt-auto border-t border-white/10 px-5 py-3 text-[0.7rem] text-muted leading-relaxed">
+          MoS Rhythm · tamamen yerel · MP4 / saydam MOV cikti<br>
+          <span class="opacity-60">Space oynat · M ses · R kayit · L döngü · S snapshot · C klip · ← → 5sn · ↑↓ ses</span>
+        </div>
+      </aside>
+    </div>
+
+    <!-- ============ ONBOARDING POPUP (ilk acilis) ============ -->
+    <div
+      id="onboarding-overlay"
+      class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+      aria-hidden="true"
+    >
+      <div
+        id="onboarding-modal"
+        class="relative w-[min(46rem,calc(100%-1rem))] max-h-[92vh] overflow-y-auto rounded-3xl border border-white/10 bg-gradient-to-b from-[#0c0405] to-[#070000] p-6 shadow-[0_0_60px_rgba(232,23,42,0.25)] sm:p-8"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="onboarding-title"
+        style="background-image:
+          radial-gradient(circle at 8% 6%, rgba(232,23,42,0.16), transparent 38%),
+          radial-gradient(circle at 92% 92%, rgba(160,0,16,0.12), transparent 34%),
+          linear-gradient(180deg, #0c0405 0%, #070000 100%);"
+      >
+        <!-- kapat -->
+        <button
+          id="onboarding-close"
+          type="button"
+          class="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-muted transition hover:border-accent/40 hover:text-cream"
+          aria-label="Kapat"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+
+        <!-- baslik -->
+        <div class="mb-6 text-center">
+          <span class="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-mint">Hos geldin</span>
+          <h2 id="onboarding-title" class="mt-1 font-display text-2xl font-bold sm:text-3xl" style="text-shadow:0 0 30px rgba(232,23,42,0.55)">
+            MoS Rhythm · Nasil Kullanilir?
+          </h2>
+          <p class="mt-2 text-sm leading-relaxed text-muted">
+            4 basit adimda muziginden video olustur. Oklari takip et.
+          </p>
+        </div>
+
+        <!-- 4 ADIMLI AKIS -->
+        <div class="rounded-2xl border border-white/10 bg-white/[0.025] p-5">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start">
+
+            <!-- 1 -->
+            <div class="flex flex-1 flex-col items-center gap-2 text-center">
+              <span class="ob-badge">1</span>
+              <strong class="text-sm">Ses Yukle</strong>
+              <p class="text-xs leading-relaxed text-muted">Soldaki <b class="text-cream">1. Ses</b> adimina MP3/WAV surukle-birak.</p>
+            </div>
+
+            <span class="ob-arrow"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+
+            <!-- 2 -->
+            <div class="flex flex-1 flex-col items-center gap-2 text-center">
+              <span class="ob-badge">2</span>
+              <strong class="text-sm">Oynat</strong>
+              <p class="text-xs leading-relaxed text-muted">Alttaki <b class="text-cream">Oynat</b> butonu ya da <span class="ob-key">Space</span>.</p>
+            </div>
+
+            <span class="ob-arrow"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+
+            <!-- 3 -->
+            <div class="flex flex-1 flex-col items-center gap-2 text-center">
+              <span class="ob-badge">3</span>
+              <strong class="text-sm">Stil &amp; Renk</strong>
+              <p class="text-xs leading-relaxed text-muted">Soldaki <b class="text-cream">2. Stil</b> adimindan gorunumu sec.</p>
+            </div>
+
+            <span class="ob-arrow"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+
+            <!-- 4 -->
+            <div class="flex flex-1 flex-col items-center gap-2 text-center">
+              <span class="ob-badge">4</span>
+              <strong class="text-sm">Kaydet</strong>
+              <p class="text-xs leading-relaxed text-muted">Alttaki <b class="text-cream">Kaydi Baslat</b> ile MP4/MOV al.</p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- alt aksiyonlar -->
+        <div class="mt-6 flex flex-col-reverse items-center justify-between gap-4 sm:flex-row">
+          <label class="flex cursor-pointer items-center gap-2 text-xs text-muted">
+            <input id="onboarding-dont-show" type="checkbox" class="h-4 w-4 cursor-pointer accent-accent" />
+            Bir daha gosterme
+          </label>
+          <div class="flex items-center gap-2">
+            <a
+              href="user-manual-2.html"
+              target="_blank"
+              class="inline-flex items-center justify-center rounded-xl border border-white/12 bg-white/5 px-4 py-2.5 text-sm text-cream no-underline transition hover:border-accent/40 hover:bg-accent/10"
+            >Detayli Kilavuz</a>
+            <button
+              id="onboarding-start"
+              type="button"
+              class="inline-flex items-center justify-center rounded-xl border border-transparent bg-gradient-to-br from-accent to-accent2 px-6 py-2.5 text-sm font-bold text-white transition hover:from-[#ff1a2e] hover:to-accent"
+            >Basla</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      .ob-badge {
+        display: flex; align-items: center; justify-content: center;
+        width: 2.4rem; height: 2.4rem; border-radius: 50%;
+        background: linear-gradient(135deg, #e8172a, #b5101d);
+        color: #fff; font-size: 0.9rem; font-weight: 700; flex-shrink: 0;
+        box-shadow: 0 0 16px rgba(232,23,42,0.45);
+      }
+      .ob-arrow {
+        display: flex; align-items: center; justify-content: center;
+        color: #e8172a; flex-shrink: 0; align-self: center;
+        filter: drop-shadow(0 0 6px rgba(232,23,42,0.5));
+      }
+      .ob-arrow svg { transform: rotate(90deg); }
+      @media (min-width: 640px) {
+        .ob-arrow { align-self: flex-start; margin-top: 0.55rem; }
+        .ob-arrow svg { transform: rotate(0deg); }
+      }
+      .ob-key {
+        display: inline-flex; align-items: center; justify-content: center;
+        padding: 0.05rem 0.4rem; border-radius: 0.35rem;
+        border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.06);
+        font-size: 0.7rem; font-weight: 600; font-family: monospace; color: #e0e0e0;
+        box-shadow: 0 1px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+      }
+    </style>
+
+    <script>
+      (function () {
+        var KEY = "mos_onboarding_hidden";
+        var overlay = document.getElementById("onboarding-overlay");
+        if (!overlay) return;
+        var dontShow = document.getElementById("onboarding-dont-show");
+
+        function open() {
+          overlay.classList.remove("hidden");
+          overlay.classList.add("flex");
+          overlay.setAttribute("aria-hidden", "false");
+        }
+        function close() {
+          if (dontShow && dontShow.checked) {
+            try { localStorage.setItem(KEY, "1"); } catch (e) {}
+          }
+          overlay.classList.add("hidden");
+          overlay.classList.remove("flex");
+          overlay.setAttribute("aria-hidden", "true");
+        }
+
+        var hidden = false;
+        try { hidden = localStorage.getItem(KEY) === "1"; } catch (e) {}
+        if (!hidden) open();
+
+        document.getElementById("onboarding-close").addEventListener("click", close);
+        document.getElementById("onboarding-start").addEventListener("click", close);
+        overlay.addEventListener("click", function (e) {
+          if (e.target === overlay) close();
+        });
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape" && !overlay.classList.contains("hidden")) close();
+        });
+      })();
+    </script>
+
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,5 @@
+.env
+.export-cache/
+.tmp-*
+node_modules/
+.claude/

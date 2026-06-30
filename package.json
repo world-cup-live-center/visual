@@ -1,0 +1,14 @@
+{
+  "name": "rhythm-forge-visualizer",
+  "version": "1.1.0",
+  "description": "Yerel muzik visualizer — MP4 ve saydam MOV cikti",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon --watch server.js server.js",
+    "serve": "node server.js"
+  }
+}

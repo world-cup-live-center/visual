@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Alpha / Saydamlik Testi</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; font-family: system-ui, sans-serif; background: #1b1b1f; color: #eee; }
+  header { padding: 16px 20px; border-bottom: 1px solid #333; }
+  h1 { font-size: 16px; margin: 0 0 6px; }
+  p { margin: 4px 0; font-size: 13px; color: #bbb; }
+  .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 12px 20px; }
+  button { background: #2b2b33; color: #eee; border: 1px solid #444; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 13px; }
+  button.active { background: #3a6df0; border-color: #3a6df0; }
+  .stage { display: flex; gap: 20px; flex-wrap: wrap; padding: 20px; }
+  .cell { border-radius: 10px; overflow: hidden; }
+  .cell h2 { font-size: 12px; margin: 0; padding: 6px 10px; background: #00000055; color: #fff; font-weight: 600; }
+  /* Saydamlik testi icin farkli zeminler */
+  .bg-checker {
+    background-image:
+      linear-gradient(45deg, #888 25%, transparent 25%),
+      linear-gradient(-45deg, #888 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #888 75%),
+      linear-gradient(-45deg, transparent 75%, #888 75%);
+    background-size: 24px 24px;
+    background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+    background-color: #ddd;
+  }
+  .bg-red { background: #d22; }
+  .bg-green { background: #1a8f3c; }
+  video { display: block; max-width: 480px; width: 100%; height: auto; }
+  .verdict { padding: 0 20px 24px; font-size: 14px; }
+  code { background: #000; padding: 2px 6px; border-radius: 4px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Saydamlik (alpha) testi</h1>
+    <p>Ürettiğiniz <code>-alpha.webm</code> dosyasını aşağıya sürükleyip bırakın ya da seçin.</p>
+    <p><b>Saydamsa</b> videonun boş alanlarından alttaki satranç deseni / kırmızı / yeşil zemin görünür. <b>Değilse</b> o alanlar siyah kalır.</p>
+  </header>
+
+  <div class="bar">
+    <input type="file" id="file" accept="video/webm,video/*" />
+    <button id="play" class="active">Oynat / Duraklat</button>
+    <span id="info" style="font-size:12px;color:#9ad;"></span>
+  </div>
+
+  <div class="stage">
+    <div class="cell bg-checker">
+      <h2>Satranç zemin</h2>
+      <video id="v1" loop muted playsinline></video>
+    </div>
+    <div class="cell bg-red">
+      <h2>Kırmızı zemin</h2>
+      <video id="v2" loop muted playsinline></video>
+    </div>
+    <div class="cell bg-green">
+      <h2>Yeşil zemin</h2>
+      <video id="v3" loop muted playsinline></video>
+    </div>
+  </div>
+
+  <div class="verdict" id="verdict"></div>
+
+<script>
+  const vids = [document.getElementById("v1"), document.getElementById("v2"), document.getElementById("v3")];
+  const fileInput = document.getElementById("file");
+  const info = document.getElementById("info");
+  const verdict = document.getElementById("verdict");
+  let url = null;
+
+  function load(file) {
+    if (url) URL.revokeObjectURL(url);
+    url = URL.createObjectURL(file);
+    info.textContent = `${file.name} — ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+    vids.forEach((v) => { v.src = url; v.play().catch(() => {}); });
+    verdict.innerHTML = "Zeminler videonun boş alanlarından görünüyorsa → <b style='color:#6f6'>SAYDAM ✔</b>. Hepsi siyahsa → <b style='color:#f88'>saydam değil / bu oynatıcı desteklemiyor</b>.";
+  }
+
+  fileInput.addEventListener("change", (e) => { if (e.target.files[0]) load(e.target.files[0]); });
+
+  // surukle-birak
+  document.body.addEventListener("dragover", (e) => e.preventDefault());
+  document.body.addEventListener("drop", (e) => {
+    e.preventDefault();
+    const f = e.dataTransfer.files[0];
+    if (f) load(f);
+  });
+
+  document.getElementById("play").addEventListener("click", () => {
+    vids.forEach((v) => { v.paused ? v.play() : v.pause(); });
+  });
+</script>
+</body>
+</html>

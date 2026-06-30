@@ -1,0 +1,5 @@
+# Railway / Nixpacks build yapilandirmasi
+# ffmpeg + ffprobe sistemi kurar. ProRes 4444 / alpha transcode bunlara baglidir;
+# bu olmadan sunucu WebM fallback'e duser. (apt 'ffmpeg' paketi ffprobe'u da icerir.)
+[phases.setup]
+aptPkgs = ["ffmpeg"]

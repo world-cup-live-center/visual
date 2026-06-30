@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="tr" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>MoS Rhythm — Kullanım Kılavuzu</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            accent: "#e8172a",
+            accent2: "#b5101d",
+            mint: "#ff4d60",
+            muted: "#7a7a7a",
+            cream: "#ffffff",
+            ink: "#050505"
+          },
+          fontFamily: {
+            display: ["Constantia", "Georgia", "serif"],
+            body: ["Bahnschrift", '"Trebuchet MS"', "Aptos", "sans-serif"]
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      background:
+        radial-gradient(circle at 8% 10%, rgba(232,23,42,0.14), transparent 32%),
+        radial-gradient(circle at 88% 85%, rgba(160,0,16,0.10), transparent 28%),
+        linear-gradient(160deg, #000000 0%, #080808 55%, #0d0000 100%);
+      background-attachment: fixed;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+      background-size: 44px 44px;
+      opacity: 0.18;
+      pointer-events: none;
+    }
+
+    .page-noise {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.035) 0.7px, transparent 0.7px);
+      background-size: 18px 18px;
+      opacity: 0.14;
+      pointer-events: none;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+    ::-webkit-scrollbar-thumb { background: rgba(232,23,42,0.5); border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(232,23,42,0.8); }
+    * { scrollbar-width: thin; scrollbar-color: rgba(232,23,42,0.5) rgba(255,255,255,0.03); }
+
+    /* Nav active state */
+    .nav-link { transition: all 0.2s ease; }
+    .nav-link.active, .nav-link:hover {
+      color: #ff4d60;
+      padding-left: 1rem;
+    }
+    .nav-link.active { border-left: 2px solid #e8172a; }
+
+    /* Section animations */
+    .section-card {
+      animation: fadeSlide 0.6s ease both;
+    }
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Viz mockup bar animation */
+    .viz-bar {
+      transform-origin: bottom;
+      animation: barPulse 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes barPulse {
+      from { transform: scaleY(0.3); opacity: 0.5; }
+      to   { transform: scaleY(1);   opacity: 1; }
+    }
+
+    /* Glow text */
+    .glow-text {
+      text-shadow: 0 0 30px rgba(232,23,42,0.6), 0 0 60px rgba(232,23,42,0.3);
+    }
+
+    /* Key badge */
+    .key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 0.4rem;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.06);
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: monospace;
+      color: #e0e0e0;
+      box-shadow: 0 2px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+
+    /* Chip */
+    .chip {
+      display: inline-block;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.45);
+      padding: 0.2rem 0.75rem;
+      font-size: 0.75rem;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Hover card */
+    .feature-card {
+      border: 1px solid rgba(255,255,255,0.07);
+      background: rgba(255,255,255,0.025);
+      border-radius: 1rem;
+      transition: border-color 0.2s, background 0.2s, transform 0.2s;
+    }
+    .feature-card:hover {
+      border-color: rgba(232,23,42,0.3);
+      background: rgba(232,23,42,0.05);
+      transform: translateY(-2px);
+    }
+
+    /* Step number */
+    .step-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.2rem;
+      height: 2.2rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e8172a, #b5101d);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      box-shadow: 0 0 16px rgba(232,23,42,0.4);
+    }
+
+    /* Mockup canvas */
+    .mockup-canvas {
+      border-radius: 0.75rem;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: linear-gradient(180deg, rgba(0,0,0,0.97), rgba(3,0,0,0.99));
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Timeline bar */
+    .timeline-bar {
+      height: 3px;
+      background: linear-gradient(90deg, #e8172a 40%, rgba(255,255,255,0.15) 40%);
+      border-radius: 999px;
+    }
+
+    /* Pulse dot */
+    .pulse-dot {
+      width: 8px; height: 8px;
+      background: #e8172a;
+      border-radius: 50%;
+      animation: pulseDot 1.4s ease-in-out infinite;
+      box-shadow: 0 0 0 0 rgba(232,23,42,0.5);
+    }
+    @keyframes pulseDot {
+      0%  { box-shadow: 0 0 0 0 rgba(232,23,42,0.5); }
+      70% { box-shadow: 0 0 0 8px rgba(232,23,42,0); }
+      100%{ box-shadow: 0 0 0 0 rgba(232,23,42,0); }
+    }
+
+    /* Gradient text */
+    .grad-text {
+      background: linear-gradient(90deg, #ff4d60, #e8172a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  </style>
+</head>
+<body class="min-h-screen font-body text-cream antialiased">
+  <div class="page-noise"></div>
+
+  <!-- ===== HERO ===== -->
+  <header class="relative z-10 overflow-hidden border-b border-white/10 px-6 py-16 text-center lg:py-24">
+    <!-- Decorative glow orbs -->
+    <div class="pointer-events-none absolute -left-20 -top-20 h-80 w-80 rounded-full bg-accent/20 blur-[100px]"></div>
+    <div class="pointer-events-none absolute -right-20 bottom-0 h-64 w-64 rounded-full bg-accent2/15 blur-[80px]"></div>
+
+    <div class="relative z-10 mx-auto max-w-3xl">
+      <div class="mb-6 flex items-center justify-center gap-3">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="logo-b" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse"><stop stop-color="#e8172a"/><stop offset="1" stop-color="#6e000c"/></linearGradient></defs>
+          <rect width="36" height="36" rx="9" fill="url(#logo-b)"/>
+          <rect x="5"  y="10" width="4" height="18" rx="2" fill="white"/>
+          <rect x="12" y="19" width="4" height="9"  rx="2" fill="white" opacity=".6"/>
+          <rect x="17" y="13" width="4" height="15" rx="2" fill="white" opacity=".85"/>
+          <rect x="24" y="19" width="4" height="9"  rx="2" fill="white" opacity=".6"/>
+          <rect x="30" y="10" width="3" height="18" rx="1.5" fill="white"/>
+        </svg>
+        <div class="text-left">
+          <p class="text-xs font-semibold uppercase tracking-widest text-mint">Kullanım Kılavuzu</p>
+          <p class="font-display text-xl font-bold">MoS Rhythm</p>
+        </div>
+      </div>
+      <h1 class="font-display text-4xl font-bold leading-tight glow-text lg:text-6xl">
+        MoS Rhythm
+      </h1>
+      <p class="mt-4 text-base leading-relaxed text-muted lg:text-lg">
+        Müziğini yükle, görselleştir, kaydet. Tamamen tarayıcıda — hiçbir şey sunucuya gönderilmez.
+      </p>
+
+      <!-- mini viz mockup in hero -->
+      <div class="mx-auto mt-10 max-w-lg">
+        <div class="mockup-canvas px-4 py-6">
+          <svg viewBox="0 0 400 80" class="w-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#ff4d60"/>
+                <stop offset="100%" stop-color="#e8172a" stop-opacity="0.4"/>
+              </linearGradient>
+            </defs>
+            <!-- Animated spectrum bars -->
+            <g fill="url(#barGrad)">
+              <rect x="4"   width="7" height="24" y="56" rx="2" style="animation:b1 0.8s ease-in-out infinite alternate"/>
+              <rect x="14"  width="7" height="40" y="40" rx="2" style="animation:b2 0.9s ease-in-out infinite alternate"/>
+              <rect x="24"  width="7" height="55" y="25" rx="2" style="animation:b3 1.0s ease-in-out infinite alternate"/>
+              <rect x="34"  width="7" height="70" y="10" rx="2" style="animation:b4 0.7s ease-in-out infinite alternate"/>
+              <rect x="44"  width="7" height="60" y="20" rx="2" style="animation:b5 1.1s ease-in-out infinite alternate"/>
+              <rect x="54"  width="7" height="45" y="35" rx="2" style="animation:b6 0.85s ease-in-out infinite alternate"/>
+              <rect x="64"  width="7" height="72" y="8"  rx="2" style="animation:b7 0.95s ease-in-out infinite alternate"/>
+              <rect x="74"  width="7" height="65" y="15" rx="2" style="animation:b1 1.2s ease-in-out infinite alternate"/>
+              <rect x="84"  width="7" height="50" y="30" rx="2" style="animation:b3 0.75s ease-in-out infinite alternate"/>
+              <rect x="94"  width="7" height="35" y="45" rx="2" style="animation:b5 1.05s ease-in-out infinite alternate"/>
+              <rect x="104" width="7" height="58" y="22" rx="2" style="animation:b2 0.88s ease-in-out infinite alternate"/>
+              <rect x="114" width="7" height="42" y="38" rx="2" style="animation:b4 1.15s ease-in-out infinite alternate"/>
+              <rect x="124" width="7" height="68" y="12" rx="2" style="animation:b6 0.82s ease-in-out infinite alternate"/>
+              <rect x="134" width="7" height="75" y="5"  rx="2" style="animation:b7 0.92s ease-in-out infinite alternate"/>
+              <rect x="144" width="7" height="62" y="18" rx="2" style="animation:b1 1.08s ease-in-out infinite alternate"/>
+              <rect x="154" width="7" height="48" y="32" rx="2" style="animation:b3 0.78s ease-in-out infinite alternate"/>
+              <rect x="164" width="7" height="38" y="42" rx="2" style="animation:b5 1.18s ease-in-out infinite alternate"/>
+              <rect x="174" width="7" height="55" y="25" rx="2" style="animation:b2 0.85s ease-in-out infinite alternate"/>
+              <rect x="184" width="7" height="70" y="10" rx="2" style="animation:b4 1.0s ease-in-out infinite alternate"/>
+              <rect x="194" width="7" height="63" y="17" rx="2" style="animation:b6 0.9s ease-in-out infinite alternate"/>
+              <rect x="204" width="7" height="45" y="35" rx="2" style="animation:b7 1.1s ease-in-out infinite alternate"/>
+              <rect x="214" width="7" height="30" y="50" rx="2" style="animation:b1 0.8s ease-in-out infinite alternate"/>
+              <rect x="224" width="7" height="52" y="28" rx="2" style="animation:b3 0.95s ease-in-out infinite alternate"/>
+              <rect x="234" width="7" height="67" y="13" rx="2" style="animation:b5 1.05s ease-in-out infinite alternate"/>
+              <rect x="244" width="7" height="78" y="2"  rx="2" style="animation:b2 0.75s ease-in-out infinite alternate"/>
+              <rect x="254" width="7" height="60" y="20" rx="2" style="animation:b4 1.2s ease-in-out infinite alternate"/>
+              <rect x="264" width="7" height="43" y="37" rx="2" style="animation:b6 0.88s ease-in-out infinite alternate"/>
+              <rect x="274" width="7" height="34" y="46" rx="2" style="animation:b7 1.0s ease-in-out infinite alternate"/>
+              <rect x="284" width="7" height="56" y="24" rx="2" style="animation:b1 0.92s ease-in-out infinite alternate"/>
+              <rect x="294" width="7" height="49" y="31" rx="2" style="animation:b3 1.15s ease-in-out infinite alternate"/>
+              <rect x="304" width="7" height="37" y="43" rx="2" style="animation:b5 0.82s ease-in-out infinite alternate"/>
+              <rect x="314" width="7" height="61" y="19" rx="2" style="animation:b2 1.08s ease-in-out infinite alternate"/>
+              <rect x="324" width="7" height="53" y="27" rx="2" style="animation:b4 0.85s ease-in-out infinite alternate"/>
+              <rect x="334" width="7" height="44" y="36" rx="2" style="animation:b6 1.18s ease-in-out infinite alternate"/>
+              <rect x="344" width="7" height="72" y="8"  rx="2" style="animation:b7 0.9s ease-in-out infinite alternate"/>
+              <rect x="354" width="7" height="65" y="15" rx="2" style="animation:b1 0.78s ease-in-out infinite alternate"/>
+              <rect x="364" width="7" height="39" y="41" rx="2" style="animation:b3 1.05s ease-in-out infinite alternate"/>
+              <rect x="374" width="7" height="28" y="52" rx="2" style="animation:b5 0.95s ease-in-out infinite alternate"/>
+              <rect x="384" width="7" height="47" y="33" rx="2" style="animation:b2 1.12s ease-in-out infinite alternate"/>
+            </g>
+            <!-- Baseline -->
+            <line x1="0" y1="80" x2="400" y2="80" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+          </svg>
+
+          <!-- Transport bar preview -->
+          <div class="mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
+            <div class="flex h-6 w-16 items-center justify-center rounded-lg bg-accent text-[0.6rem] font-bold">▶ Oynat</div>
+            <div class="flex h-6 w-16 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[0.6rem]">Kayıt</div>
+            <div class="h-2 flex-1 rounded-full border border-white/10 bg-black/30">
+              <div class="timeline-bar h-2 w-2/5 rounded-full"></div>
+            </div>
+            <span class="text-[0.6rem] text-muted tabular-nums">01:23 / 03:47</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <a href="index.html" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent2 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-accent/30 transition hover:from-[#ff1a2e] hover:to-accent">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Uygulamayı Aç
+        </a>
+        <a href="#baslangic" class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm text-cream transition hover:border-accent/40 hover:bg-accent/10">
+          Kılavuzu Oku
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== MAIN LAYOUT ===== -->
+  <div class="relative z-10 mx-auto max-w-7xl px-4 py-12 lg:flex lg:gap-12">
+
+    <!-- LEFT NAV (sticky) -->
+    <nav class="hidden lg:block lg:w-56 lg:shrink-0">
+      <div class="sticky top-8 rounded-2xl border border-white/10 bg-black/60 p-4 backdrop-blur-xl">
+        <p class="mb-3 text-[0.65rem] font-semibold uppercase tracking-widest text-muted">İçindekiler</p>
+        <ul class="flex flex-col gap-0.5 text-sm">
+          <li><a href="#baslangic"  class="nav-link block py-1.5 text-muted pl-2 border-l border-transparent">Başlangıç</a></li>
+          <li><a href="#adim-1"     class="nav-link block py-1.5 text-muted pl-2 border-l border-transparent">1 · Ses Yükle</a></li>
+          <li><a href="#adim-2"     class="nav-link block py-1.5 text-muted pl-2 border-l border-transparent">2 · Stil Seç</a></li>
+          <li><a href="#adim-3"     class="nav-link block py-1.5 text-muted pl-2 border-l border-transparent">3 · Analiz</a></li>
+          <li><a href="#adim-4"     class="nav-link block py-1.5 text-muted pl-2 border-l border-transparent">4 · İnce Ayar</a></li>
+          <li><a href="#adim-5"     class="nav-link block py-1.5 text-muted pl-2 border-l border-transparent">5 · Albüm Yazısı</a></li>
+          <li><a href="#adim-6"     class="nav-link block py-1.5 text-muted pl-2 border-l border-transparent">6 · Albüm Kapağı</a></li>
+          <li><a href="#adim-7"     class="nav-link block py-1.5 text-muted pl-2 border-l border-transparent">7 · Presetler</a></li>
+          <li><a href="#adim-8"     class="nav-link block py-1.5 text-muted pl-2 border-l border-transparent">8 · Çıktı &amp; Export</a></li>
+          <li><a href="#transport"  class="nav-link block py-1.5 text-muted pl-2 border-l border-transparent">Transport</a></li>
+          <li><a href="#klavye"     class="nav-link block py-1.5 text-muted pl-2 border-l border-transparent">Klavye Kısayolları</a></li>
+          <li><a href="#ipuclari"   class="nav-link block py-1.5 text-muted pl-2 border-l border-transparent">İpuçları</a></li>
+        </ul>
+        <div class="mt-4 border-t border-white/10 pt-4">
+          <a href="index.html" class="flex items-center gap-2 rounded-lg border border-accent/30 bg-accent/10 px-3 py-2 text-xs font-semibold text-accent transition hover:bg-accent/20">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Uygulamayı Aç
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- CONTENT -->
+    <main class="min-w-0 flex-1 space-y-16">
+
+      <!-- ===== BAŞLANGIÇ ===== -->
+      <section id="baslangic" class="section-card">
+        <div class="mb-6 flex items-center gap-3">
+          <span class="text-[0.65rem] font-semibold uppercase tracking-widest text-mint">Genel Bakış</span>
+        </div>
+        <h2 class="font-display text-3xl font-bold">MoS Rhythm Nedir?</h2>
+        <p class="mt-3 text-base leading-relaxed text-muted">
+          MoS Rhythm, müzik dosyalarını gerçek zamanlı olarak görselleştiren, kayıt edip MP4/MOV olarak dışa aktaran
+          bir tarayıcı uygulamasıdır. İnternet bağlantısına gerek yoktur — her şey yerel olarak çalışır.
+        </p>
+
+        <div class="mt-8 grid gap-4 sm:grid-cols-3">
+          <div class="feature-card p-4">
+            <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff4d60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+            </div>
+            <strong class="block text-sm">Gerçek Zamanlı</strong>
+            <p class="mt-1 text-xs leading-relaxed text-muted">Müzik çalarken görsel anında tepki verir. Hiç gecikme yok.</p>
+          </div>
+          <div class="feature-card p-4">
+            <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff4d60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <strong class="block text-sm">22 Görsel Mod</strong>
+            <p class="mt-1 text-xs leading-relaxed text-muted">Spectrum Bars'tan DNA Helix'e kadar her tarza özel bir mod var.</p>
+          </div>
+          <div class="feature-card p-4">
+            <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff4d60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </div>
+            <strong class="block text-sm">MP4 / MOV Export</strong>
+            <p class="mt-1 text-xs leading-relaxed text-muted">1080p–2160p kayıt. Yeşil ekran ve şeffaf arka plan desteği.</p>
+          </div>
+        </div>
+
+        <!-- Hızlı akış -->
+        <div class="mt-10 rounded-2xl border border-white/10 bg-white/[0.025] p-6">
+          <p class="mb-5 text-sm font-semibold uppercase tracking-wider text-muted">Hızlı Başlangıç — 3 Adım</p>
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <div class="flex flex-1 flex-col items-center gap-2 text-center">
+              <div class="step-badge">1</div>
+              <strong class="text-sm">Ses Yükle</strong>
+              <p class="text-xs text-muted">MP3/WAV/FLAC dosyasını sürükleyip bırak veya seç.</p>
+            </div>
+            <div class="flex items-center justify-center text-white/20 sm:mt-5">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+            <div class="flex flex-1 flex-col items-center gap-2 text-center">
+              <div class="step-badge">2</div>
+              <strong class="text-sm">Oynat</strong>
+              <p class="text-xs text-muted">"Oynat" butonuna bas veya <span class="key">Space</span> kullan.</p>
+            </div>
+            <div class="flex items-center justify-center text-white/20 sm:mt-5">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+            <div class="flex flex-1 flex-col items-center gap-2 text-center">
+              <div class="step-badge">3</div>
+              <strong class="text-sm">Kaydet</strong>
+              <p class="text-xs text-muted">"Kaydı Başlat" ile MP4 kaydını başlat.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== ADIM 1: SES ===== -->
+      <section id="adim-1" class="section-card">
+        <div class="flex items-start gap-4">
+          <div class="step-badge text-lg">1</div>
+          <div class="flex-1">
+            <span class="text-[0.65rem] font-semibold uppercase tracking-widest text-mint">Adım 1</span>
+            <h2 class="font-display text-2xl font-bold">Ses Yükle</h2>
+          </div>
+        </div>
+
+        <div class="mt-6 grid gap-6 lg:grid-cols-2">
+          <div class="space-y-4 text-sm leading-relaxed text-muted">
+            <p>Sol panelde <strong class="text-cream">1 · Ses</strong> bölümünü aç. Üç yöntemle ses ekleyebilirsin:</p>
+
+            <div class="space-y-3">
+              <div class="feature-card flex items-start gap-3 p-4">
+                <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent/20 text-xs font-bold text-accent">A</span>
+                <div>
+                  <strong class="text-cream">Dosya Seç</strong>
+                  <p class="mt-0.5 text-xs">Dosya alanına tıkla, arayan açılır. MP3 · WAV · M4A · AAC · OGG · FLAC desteklenir.</p>
+                </div>
+              </div>
+              <div class="feature-card flex items-start gap-3 p-4">
+                <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent/20 text-xs font-bold text-accent">B</span>
+                <div>
+                  <strong class="text-cream">Sürükle &amp; Bırak</strong>
+                  <p class="mt-0.5 text-xs">Dosyayı sol panele veya doğrudan görsel alana bırak — her ikisi de çalışır.</p>
+                </div>
+              </div>
+              <div class="feature-card flex items-start gap-3 p-4">
+                <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent/20 text-xs font-bold text-accent">C</span>
+                <div>
+                  <strong class="text-cream">Mikrofon</strong>
+                  <p class="mt-0.5 text-xs">"Mikrofon Başlat" butonuyla canlı mikrofon girdisini görselleştirebilirsin. Canlı kaydı da destekler.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-accent/20 bg-accent/5 px-4 py-3 text-xs">
+              <strong class="text-accent">Gizlilik:</strong> Yüklediğin müzik yalnızca bu tarayıcıda işlenir, hiçbir zaman internete gönderilmez.
+            </div>
+          </div>
+
+          <!-- Mockup -->
+          <div class="mockup-canvas p-4">
+            <p class="mb-3 text-[0.6rem] uppercase tracking-widest text-muted">Ses Paneli</p>
+            <!-- drop zone -->
+            <div class="rounded-xl border-2 border-dashed border-white/25 bg-white/[0.03] p-5 text-center transition hover:border-accent/50">
+              <svg class="mx-auto mb-2 text-muted" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-mint">MP3 · WAV · M4A · AAC · OGG · FLAC</p>
+              <strong class="mt-1 block text-sm">Dosya seç veya bırak</strong>
+              <p class="mt-1 text-[0.65rem] text-muted">Müzik yalnızca bu tarayıcıda işlenir</p>
+            </div>
+            <!-- track info -->
+            <div class="mt-3 grid gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+              <div>
+                <p class="text-[0.6rem] uppercase tracking-widest text-muted">Parça</p>
+                <strong class="block text-sm text-accent">my_song.mp3</strong>
+              </div>
+              <div>
+                <p class="text-[0.6rem] uppercase tracking-widest text-muted">Bilgi</p>
+                <strong class="block text-sm text-muted">3:47 · 8.4 MB</strong>
+              </div>
+            </div>
+            <!-- mic btn -->
+            <button class="mt-3 w-full rounded-xl border border-white/10 bg-white/5 py-2 text-xs font-semibold text-cream">Mikrofon Başlat</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== ADIM 2: STİL ===== -->
+      <section id="adim-2" class="section-card">
+        <div class="flex items-start gap-4">
+          <div class="step-badge text-lg">2</div>
+          <div class="flex-1">
+            <span class="text-[0.65rem] font-semibold uppercase tracking-widest text-mint">Adım 2</span>
+            <h2 class="font-display text-2xl font-bold">Stil &amp; Renk Seç</h2>
+          </div>
+        </div>
+        <p class="mt-3 text-sm leading-relaxed text-muted">22 görsel mod, 7 renk paleti ve 3 sahne arka planı arasından seçim yapabilirsin. Müzik çalarken değiştirmek de mümkündür.</p>
+
+        <!-- Mode grid -->
+        <div class="mt-6">
+          <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">Görsel Modlar</p>
+          <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            <!-- Each mode card with mini SVG preview -->
+            <div class="feature-card p-3 text-center">
+              <svg viewBox="0 0 60 36" class="mx-auto mb-2 w-full max-w-[80px]" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2"  y="18" width="5" height="18" fill="#e8172a" rx="1" opacity="0.9"/>
+                <rect x="9"  y="10" width="5" height="26" fill="#e8172a" rx="1" opacity="0.9"/>
+                <rect x="16" y="4"  width="5" height="32" fill="#ff4d60" rx="1"/>
+                <rect x="23" y="14" width="5" height="22" fill="#e8172a" rx="1" opacity="0.9"/>
+                <rect x="30" y="6"  width="5" height="30" fill="#ff4d60" rx="1"/>
+                <rect x="37" y="16" width="5" height="20" fill="#e8172a" rx="1" opacity="0.9"/>
+                <rect x="44" y="8"  width="5" height="28" fill="#ff4d60" rx="1"/>
+                <rect x="51" y="20" width="5" height="16" fill="#e8172a" rx="1" opacity="0.7"/>
+              </svg>
+              <strong class="block text-xs">Spectrum Bars</strong>
+            </div>
+            <div class="feature-card p-3 text-center">
+              <svg viewBox="0 0 60 36" class="mx-auto mb-2 w-full max-w-[80px]" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="30" cy="18" r="8" fill="none" stroke="#e8172a" stroke-width="2"/>
+                <circle cx="30" cy="18" r="14" fill="none" stroke="#ff4d60" stroke-width="1.5" stroke-dasharray="3 2"/>
+                <circle cx="30" cy="18" r="18" fill="none" stroke="#e8172a" stroke-width="1" opacity="0.5"/>
+                <line x1="30" y1="4" x2="30" y2="32" stroke="#ff4d60" stroke-width="0.5" stroke-dasharray="2 3" opacity="0.4"/>
+                <line x1="16" y1="18" x2="44" y2="18" stroke="#ff4d60" stroke-width="0.5" stroke-dasharray="2 3" opacity="0.4"/>
+              </svg>
+              <strong class="block text-xs">Halo Ring</strong>
+            </div>
+            <div class="feature-card p-3 text-center">
+              <svg viewBox="0 0 60 36" class="mx-auto mb-2 w-full max-w-[80px]" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 18 Q8 8 14 18 Q20 28 26 18 Q32 8 38 18 Q44 28 50 18 Q56 10 60 18" fill="none" stroke="#ff4d60" stroke-width="2" stroke-linecap="round"/>
+                <path d="M2 22 Q8 12 14 22 Q20 32 26 22 Q32 12 38 22 Q44 32 50 22 Q56 14 60 22" fill="none" stroke="#e8172a" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+              </svg>
+              <strong class="block text-xs">Wave Ribbon</strong>
+            </div>
+            <div class="feature-card p-3 text-center">
+              <svg viewBox="0 0 60 36" class="mx-auto mb-2 w-full max-w-[80px]" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="30,4 52,30 8,30" fill="none" stroke="#ff4d60" stroke-width="2"/>
+                <polygon points="30,10 46,28 14,28" fill="none" stroke="#e8172a" stroke-width="1.5" opacity="0.7"/>
+                <polygon points="30,16 40,26 20,26" fill="rgba(232,23,42,0.2)" stroke="#ff4d60" stroke-width="1"/>
+              </svg>
+              <strong class="block text-xs">Geometry Pulse</strong>
+            </div>
+            <div class="feature-card p-3 text-center">
+              <svg viewBox="0 0 60 36" class="mx-auto mb-2 w-full max-w-[80px]" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2"  y="10" width="5" height="16" fill="#e8172a" rx="1"/>
+                <rect x="9"  y="4"  width="5" height="28" fill="#ff4d60" rx="1"/>
+                <rect x="16" y="8"  width="5" height="20" fill="#e8172a" rx="1"/>
+                <rect x="23" y="2"  width="5" height="32" fill="#ff4d60" rx="1"/>
+                <line x1="30" y1="0" x2="30" y2="36" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+                <rect x="32" y="2"  width="5" height="32" fill="#ff4d60" rx="1"/>
+                <rect x="39" y="8"  width="5" height="20" fill="#e8172a" rx="1"/>
+                <rect x="46" y="4"  width="5" height="28" fill="#ff4d60" rx="1"/>
+                <rect x="53" y="10" width="5" height="16" fill="#e8172a" rx="1"/>
+              </svg>
+              <strong class="block text-xs">Mirror Bars</strong>
+            </div>
+            <div class="feature-card p-3 text-center">
+              <svg viewBox="0 0 60 36" class="mx-auto mb-2 w-full max-w-[80px]" xmlns="http://www.w3.org/2000/svg">
+                <path d="M30 18 L30 6" stroke="#ff4d60" stroke-width="2"/>
+                <path d="M30 18 L42 14" stroke="#e8172a" stroke-width="1.5" opacity="0.8"/>
+                <path d="M30 18 L40 26" stroke="#ff4d60" stroke-width="1.5" opacity="0.6"/>
+                <path d="M30 18 L26 30" stroke="#e8172a" stroke-width="1.5" opacity="0.5"/>
+                <path d="M30 18 L18 28" stroke="#ff4d60" stroke-width="1.5" opacity="0.4"/>
+                <path d="M30 18 L16 20" stroke="#e8172a" stroke-width="1.5" opacity="0.3"/>
+                <circle cx="30" cy="18" r="3" fill="#ff4d60"/>
+                <circle cx="30" cy="6"  r="1.5" fill="#e8172a"/>
+                <circle cx="42" cy="14" r="1.5" fill="#e8172a" opacity="0.8"/>
+                <circle cx="40" cy="26" r="1.5" fill="#e8172a" opacity="0.6"/>
+              </svg>
+              <strong class="block text-xs">Spiral Bloom</strong>
+            </div>
+            <div class="feature-card p-3 text-center">
+              <svg viewBox="0 0 60 36" class="mx-auto mb-2 w-full max-w-[80px]" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4"  y="0"  width="52" height="36" fill="none"/>
+                <rect x="4"  y="2"  width="52" height="5"  fill="#e8172a" opacity="0.15" rx="1"/>
+                <rect x="8"  y="9"  width="44" height="5"  fill="#ff4d60" opacity="0.25" rx="1"/>
+                <rect x="12" y="16" width="36" height="5"  fill="#e8172a" opacity="0.45" rx="1"/>
+                <rect x="16" y="23" width="28" height="5"  fill="#ff4d60" opacity="0.7"  rx="1"/>
+                <rect x="20" y="30" width="20" height="4"  fill="#e8172a" opacity="0.9"  rx="1"/>
+              </svg>
+              <strong class="block text-xs">Neon Tunnel</strong>
+            </div>
+            <div class="feature-card p-3 text-center">
+              <svg viewBox="0 0 60 36" class="mx-auto mb-2 w-full max-w-[80px]" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="20" r="2.5" fill="#ff4d60" opacity="0.9"/>
+                <circle cx="20" cy="12" r="2"   fill="#e8172a" opacity="0.7"/>
+                <circle cx="30" cy="8"  r="3"   fill="#ff4d60"/>
+                <circle cx="38" cy="14" r="2.5" fill="#e8172a" opacity="0.8"/>
+                <circle cx="46" cy="22" r="2"   fill="#ff4d60" opacity="0.6"/>
+                <circle cx="16" cy="28" r="1.5" fill="#e8172a" opacity="0.5"/>
+                <circle cx="26" cy="26" r="2"   fill="#ff4d60" opacity="0.7"/>
+                <circle cx="42" cy="30" r="1.5" fill="#e8172a" opacity="0.4"/>
+                <circle cx="50" cy="14" r="1.5" fill="#ff4d60" opacity="0.5"/>
+              </svg>
+              <strong class="block text-xs">Particle Burst</strong>
+            </div>
+          </ul>
+        </div>
+        <p class="mt-3 text-center text-xs text-muted">...ve 14 mod daha: Pulse Lattice, Aurora Wave, Pulse Grid, Liquid Bloom, Dot Stream, Oscilloscope, Stereo Field, Neon String, Dot Line, Mirror 3D, Petal Burst, Spectrogram, Ripple Beat, DNA Helix</p>
+
+        <!-- Palette & Backdrop -->
+        <div class="mt-8 grid gap-4 sm:grid-cols-2">
+          <div class="feature-card p-4">
+            <strong class="mb-3 block text-sm">Renk Paletleri</strong>
+            <div class="space-y-2">
+              <div class="flex items-center gap-3">
+                <div class="flex gap-1">
+                  <div class="h-4 w-4 rounded-full" style="background:#e8172a"></div>
+                  <div class="h-4 w-4 rounded-full" style="background:#ffffff"></div>
+                  <div class="h-4 w-4 rounded-full" style="background:#ff4d60"></div>
+                </div>
+                <span class="text-xs text-muted">Kırmızı Beyaz</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex gap-1">
+                  <div class="h-4 w-4 rounded-full" style="background:#ff9754"></div>
+                  <div class="h-4 w-4 rounded-full" style="background:#85e3c4"></div>
+                  <div class="h-4 w-4 rounded-full" style="background:#ffd37a"></div>
+                </div>
+                <span class="text-xs text-muted">Amber Mint</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex gap-1">
+                  <div class="h-4 w-4 rounded-full" style="background:#ff2079"></div>
+                  <div class="h-4 w-4 rounded-full" style="background:#00d4ff"></div>
+                  <div class="h-4 w-4 rounded-full" style="background:#7b2fff"></div>
+                </div>
+                <span class="text-xs text-muted">Neon City</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex gap-1">
+                  <div class="h-4 w-4 rounded-full" style="background:#ff6b00"></div>
+                  <div class="h-4 w-4 rounded-full" style="background:#ffcd00"></div>
+                  <div class="h-4 w-4 rounded-full" style="background:#ff2040"></div>
+                </div>
+                <span class="text-xs text-muted">Solar Dusk</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex gap-1">
+                  <div class="h-4 w-4 rounded-full" style="background:#00cfff"></div>
+                  <div class="h-4 w-4 rounded-full" style="background:#7cffcb"></div>
+                  <div class="h-4 w-4 rounded-full" style="background:#a855f7"></div>
+                </div>
+                <span class="text-xs text-muted">Frost Pulse</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex gap-1">
+                  <div class="h-4 w-4 rounded-full bg-white"></div>
+                  <div class="h-4 w-4 rounded-full" style="background:#d0d0d0"></div>
+                  <div class="h-4 w-4 rounded-full" style="background:#a0a0a0"></div>
+                </div>
+                <span class="text-xs text-muted">Mono White</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex h-4 w-4 items-center justify-center rounded-full border border-white/20">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                </div>
+                <span class="text-xs text-muted">Özel Palet — 3 renk seç</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-card p-4">
+            <strong class="mb-3 block text-sm">Sahne Arka Planları</strong>
+            <div class="space-y-2 text-sm">
+              <div class="flex items-center gap-3">
+                <div class="h-10 w-14 shrink-0 rounded-lg" style="background: linear-gradient(135deg, #1a0a2e, #0d1a2e, #0a2e1a)"></div>
+                <div>
+                  <strong class="block text-xs">Aurora Mist</strong>
+                  <p class="text-[0.65rem] text-muted">Hareketli aurora arka plan efekti</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="h-10 w-14 shrink-0 rounded-lg" style="background: #050505; background-image: linear-gradient(rgba(255,0,40,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,0,40,0.3) 1px, transparent 1px); background-size: 12px 12px;"></div>
+                <div>
+                  <strong class="block text-xs">Laser Grid</strong>
+                  <p class="text-[0.65rem] text-muted">Neon ızgara çizgileri</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="h-10 w-14 shrink-0 rounded-lg bg-black"></div>
+                <div>
+                  <strong class="block text-xs">Deep Void</strong>
+                  <p class="text-[0.65rem] text-muted">Saf siyah, minimal arka plan</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="h-10 w-14 shrink-0 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                </div>
+                <div>
+                  <strong class="block text-xs">Kendi Görselin</strong>
+                  <p class="text-[0.65rem] text-muted">PNG/JPG yükle, karartma ayarla</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== ADIM 3: ANALİZ ===== -->
+      <section id="adim-3" class="section-card">
+        <div class="flex items-start gap-4">
+          <div class="step-badge text-lg">3</div>
+          <div class="flex-1">
+            <span class="text-[0.65rem] font-semibold uppercase tracking-widest text-mint">Adım 3</span>
+            <h2 class="font-display text-2xl font-bold">Analiz Ayarları</h2>
+          </div>
+        </div>
+        <p class="mt-3 text-sm leading-relaxed text-muted">Görselin müziğe nasıl tepki verdiğini bu kaydırıcılarla ince ayarlarsın.</p>
+
+        <div class="mt-6 grid gap-4 sm:grid-cols-2">
+          <div class="feature-card p-5 space-y-4">
+            <div>
+              <div class="flex items-center justify-between">
+                <strong class="text-sm">Bant Yoğunluğu</strong>
+                <span class="chip">88 bant</span>
+              </div>
+              <div class="mt-2 h-2 w-full rounded-full" style="background: linear-gradient(90deg, rgba(232,23,42,0.75) 61%, rgba(255,255,255,0.12) 61%)">
+                <div class="h-2 w-6/10 rounded-full"></div>
+              </div>
+              <p class="mt-1.5 text-xs text-muted">32–144 arası. Daha fazla bant = daha detaylı görsel. Düşük tutmak bazı modlarda daha temiz görünüm verir.</p>
+            </div>
+            <div>
+              <div class="flex items-center justify-between">
+                <strong class="text-sm">Hassasiyet</strong>
+                <span class="chip">1.20x</span>
+              </div>
+              <div class="mt-2 h-2 w-full rounded-full" style="background: linear-gradient(90deg, rgba(232,23,42,0.75) 50%, rgba(255,255,255,0.12) 50%)"></div>
+              <p class="mt-1.5 text-xs text-muted">0.6x–1.8x arası. Yüksek değer görseli daha agresif tepkili yapar; sessiz parçalar için artır.</p>
+            </div>
+          </div>
+          <div class="feature-card p-5 space-y-4">
+            <div>
+              <div class="flex items-center justify-between">
+                <strong class="text-sm">Akış Yumuşatma</strong>
+                <span class="chip">0.82</span>
+              </div>
+              <div class="mt-2 h-2 w-full rounded-full" style="background: linear-gradient(90deg, rgba(232,23,42,0.75) 73%, rgba(255,255,255,0.12) 73%)"></div>
+              <p class="mt-1.5 text-xs text-muted">0.55–0.95 arası. Yüksek değer hareketi yumuşatır. Düşük değer daha çıtır ve anlık tepki verir.</p>
+            </div>
+            <div>
+              <div class="flex items-center justify-between">
+                <strong class="text-sm">Glow Seviyesi</strong>
+                <span class="chip">28 px</span>
+              </div>
+              <div class="mt-2 h-2 w-full rounded-full" style="background: linear-gradient(90deg, rgba(232,23,42,0.75) 50%, rgba(255,255,255,0.12) 50%)"></div>
+              <p class="mt-1.5 text-xs text-muted">8–48 px arası. Görseldeki parlama yoğunluğu. Export'ta büyük etki yaratır.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metrik badge'ler -->
+        <div class="mt-6 rounded-2xl border border-white/10 bg-white/[0.025] p-4">
+          <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">Canlı Metrikler (sağ üstte görünür)</p>
+          <div class="flex flex-wrap gap-2">
+            <div class="rounded-lg border border-white/10 bg-black/45 px-3 py-2 text-center backdrop-blur">
+              <p class="text-[0.6rem] uppercase tracking-wider text-muted">Enerji</p>
+              <strong class="block text-sm">73%</strong>
+            </div>
+            <div class="rounded-lg border border-white/10 bg-black/45 px-3 py-2 text-center backdrop-blur">
+              <p class="text-[0.6rem] uppercase tracking-wider text-muted">Bass</p>
+              <strong class="block text-sm">88%</strong>
+            </div>
+            <div class="rounded-lg border border-white/10 bg-black/45 px-3 py-2 text-center backdrop-blur">
+              <p class="text-[0.6rem] uppercase tracking-wider text-muted">Mid</p>
+              <strong class="block text-sm">62%</strong>
+            </div>
+            <div class="rounded-lg border border-white/10 bg-black/45 px-3 py-2 text-center backdrop-blur">
+              <p class="text-[0.6rem] uppercase tracking-wider text-muted">High</p>
+              <strong class="block text-sm">45%</strong>
+            </div>
+            <div class="rounded-lg border border-white/10 bg-black/45 px-3 py-2 text-center backdrop-blur">
+              <p class="text-[0.6rem] uppercase tracking-wider text-muted">Peak</p>
+              <strong class="block text-sm">–6 dB</strong>
+            </div>
+            <div class="rounded-lg border border-white/10 bg-black/45 px-3 py-2 text-center backdrop-blur">
+              <p class="text-[0.6rem] uppercase tracking-wider text-muted">BPM</p>
+              <strong class="block text-sm">128</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== ADIM 4: İNCE AYAR ===== -->
+      <section id="adim-4" class="section-card">
+        <div class="flex items-start gap-4">
+          <div class="step-badge text-lg">4</div>
+          <div class="flex-1">
+            <span class="text-[0.65rem] font-semibold uppercase tracking-widest text-mint">Adım 4</span>
+            <h2 class="font-display text-2xl font-bold">İnce Ayarlar</h2>
+          </div>
+        </div>
+        <p class="mt-3 text-sm leading-relaxed text-muted">Görselin boyutunu ve konumunu sahne içinde tam istediğin yere getir.</p>
+
+        <div class="mt-6 grid gap-6 lg:grid-cols-2">
+          <div class="space-y-4 text-sm">
+            <div class="feature-card p-4">
+              <strong class="block text-sm">Visual Boyutu</strong>
+              <p class="mt-1 text-xs text-muted">0.5x–1.4x arası. Varsayılan 1.00x. Büyütmek görseli sahneye doldurur.</p>
+              <div class="mt-3 flex items-center gap-2">
+                <button class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-sm">−</button>
+                <div class="h-2 flex-1 rounded-full" style="background: linear-gradient(90deg, rgba(232,23,42,0.75) 43%, rgba(255,255,255,0.12) 43%)"></div>
+                <button class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-sm">+</button>
+              </div>
+            </div>
+            <div class="feature-card p-4">
+              <strong class="block text-sm">Yatay / Dikey Konum</strong>
+              <p class="mt-1 text-xs text-muted">Görseli sahne içinde sola/sağa, yukarı/aşağı kaydır. Albumkapaklı kompozisyonlar için idealdir.</p>
+            </div>
+            <div class="flex gap-2">
+              <div class="flex-1 rounded-xl border border-white/10 bg-white/5 py-2 text-center text-xs font-semibold">Ortala</div>
+              <div class="flex-1 rounded-xl border border-white/10 bg-white/5 py-2 text-center text-xs font-semibold">Sıfırla</div>
+            </div>
+          </div>
+
+          <!-- Position grid mockup -->
+          <div class="mockup-canvas flex items-center justify-center p-6">
+            <div class="relative h-36 w-full rounded-xl border border-white/10" style="background: linear-gradient(180deg,#000,#080000)">
+              <!-- grid lines -->
+              <div class="absolute inset-0 opacity-20" style="background-image: linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px); background-size: 33% 33%;"></div>
+              <!-- visual indicator -->
+              <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                <div class="flex h-16 w-24 items-end justify-center gap-0.5 rounded-lg border border-accent/40 bg-accent/10 pb-1">
+                  <div class="w-2 rounded-sm bg-accent" style="height:70%"></div>
+                  <div class="w-2 rounded-sm bg-accent" style="height:90%"></div>
+                  <div class="w-2 rounded-sm bg-accent" style="height:55%"></div>
+                  <div class="w-2 rounded-sm bg-accent" style="height:80%"></div>
+                  <div class="w-2 rounded-sm bg-accent" style="height:65%"></div>
+                </div>
+                <p class="mt-1 text-center text-[0.55rem] text-accent">1.00x · 0% · 0%</p>
+              </div>
+              <!-- crosshair -->
+              <div class="pointer-events-none absolute inset-0">
+                <div class="absolute left-1/2 top-0 bottom-0 w-px border-l border-dashed border-white/10"></div>
+                <div class="absolute top-1/2 left-0 right-0 h-px border-t border-dashed border-white/10"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== ADIM 5: ALBÜM BİLGİLERİ ===== -->
+      <section id="adim-5" class="section-card">
+        <div class="flex items-start gap-4">
+          <div class="step-badge text-lg">5</div>
+          <div class="flex-1">
+            <span class="text-[0.65rem] font-semibold uppercase tracking-widest text-mint">Adım 5</span>
+            <h2 class="font-display text-2xl font-bold">Albüm Bilgileri</h2>
+          </div>
+        </div>
+        <p class="mt-3 text-sm leading-relaxed text-muted">Sanatçı adı ve şarkı başlığını canvas üzerine animasyonlu olarak yerleştirebilirsin.</p>
+
+        <div class="mt-6 grid gap-6 lg:grid-cols-2">
+          <div class="space-y-3 text-sm">
+            <div class="feature-card p-4">
+              <strong class="block text-sm">Canvas'a Yaz</strong>
+              <p class="mt-1 text-xs text-muted">Etkinleştirince metin canvas üzerine çizilir — MP4 kaydına da dahil olur.</p>
+            </div>
+            <div class="feature-card p-4">
+              <strong class="block text-sm">Konum</strong>
+              <p class="mt-1 text-xs text-muted">Sol alt · Alt orta · Sağ alt · Sol üst · Üst orta — 5 pozisyon seçeneği.</p>
+            </div>
+            <div class="feature-card p-4">
+              <strong class="block text-sm">Animasyon Türleri</strong>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <span class="chip">Yok</span>
+                <span class="chip">Belir</span>
+                <span class="chip">Yukarı Kayma</span>
+                <span class="chip">Soldan Kayma</span>
+                <span class="chip">Daktilo</span>
+                <span class="chip">Nefes</span>
+                <span class="chip">Beat Parlaması</span>
+                <span class="chip">Yüzer</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Text overlay mockup -->
+          <div class="mockup-canvas relative" style="min-height:160px;">
+            <div class="absolute inset-0 flex items-end justify-start p-4">
+              <!-- Sample bars in background -->
+              <div class="absolute bottom-12 left-0 right-0 flex items-end justify-center gap-1 px-4 opacity-40">
+                <div class="w-3 rounded-sm bg-accent" style="height:30px"></div>
+                <div class="w-3 rounded-sm bg-accent" style="height:50px"></div>
+                <div class="w-3 rounded-sm bg-accent" style="height:40px"></div>
+                <div class="w-3 rounded-sm bg-accent" style="height:60px"></div>
+                <div class="w-3 rounded-sm bg-accent" style="height:35px"></div>
+                <div class="w-3 rounded-sm bg-accent" style="height:55px"></div>
+                <div class="w-3 rounded-sm bg-accent" style="height:45px"></div>
+              </div>
+              <!-- Text overlay -->
+              <div class="relative z-10">
+                <p class="font-display text-lg font-bold leading-tight" style="text-shadow: 0 0 20px rgba(232,23,42,0.5)">Şarkı Başlığı</p>
+                <p class="text-sm text-muted" style="text-shadow: 0 2px 8px rgba(0,0,0,0.8)">Sanatçı Adı</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== ADIM 6: ALBÜM KAPAĞI ===== -->
+      <section id="adim-6" class="section-card">
+        <div class="flex items-start gap-4">
+          <div class="step-badge text-lg">6</div>
+          <div class="flex-1">
+            <span class="text-[0.65rem] font-semibold uppercase tracking-widest text-mint">Adım 6</span>
+            <h2 class="font-display text-2xl font-bold">Albüm Kapağı</h2>
+          </div>
+        </div>
+        <p class="mt-3 text-sm leading-relaxed text-muted">Albüm kapağı görselini canvas üzerine ekle — iki modda gösterebilir, boyutunu ve konumunu ayarlayabilirsin.</p>
+
+        <div class="mt-6 grid gap-4 sm:grid-cols-3">
+          <div class="feature-card p-4">
+            <div class="mb-3 flex justify-center">
+              <div class="relative h-16 w-16 rounded-full border-2 border-accent/50 overflow-hidden bg-accent/10 flex items-center justify-center">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff4d60" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                <div class="absolute inset-0 rounded-full border-4 border-black/70"></div>
+              </div>
+            </div>
+            <strong class="block text-center text-sm">Merkez Daire</strong>
+            <p class="mt-1 text-center text-xs text-muted">Kapak görsel sahnenin ortasında dönen daire içinde gösterilir.</p>
+          </div>
+          <div class="feature-card p-4">
+            <div class="mb-3 h-16 w-full rounded-xl overflow-hidden" style="background: linear-gradient(135deg, rgba(232,23,42,0.3), rgba(100,0,10,0.3)); backdrop-filter: blur(8px);">
+              <div class="h-full w-full flex items-center justify-center opacity-40">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              </div>
+            </div>
+            <strong class="block text-center text-sm">Arka Plan (Bulanık)</strong>
+            <p class="mt-1 text-center text-xs text-muted">Kapak, sahneye yayılmış ve bulanıklaştırılmış arka plan olur.</p>
+          </div>
+          <div class="feature-card p-4 space-y-3">
+            <div class="flex items-center gap-2">
+              <div class="pulse-dot"></div>
+              <strong class="text-sm">Beat Flash</strong>
+            </div>
+            <p class="text-xs text-muted">Her bass vuruşunda ekrana anlık parlaklık dalgası geçer.</p>
+            <hr class="border-white/10"/>
+            <div class="flex items-center gap-2">
+              <div class="h-3 w-3 rounded-full" style="background: conic-gradient(#ff4d60, #b5101d, #ff4d60)"></div>
+              <strong class="text-sm">Reaktif Renk</strong>
+            </div>
+            <p class="text-xs text-muted">Renk tonu müzikle birlikte yavaşça kayar, canlılık hissi verir.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== ADIM 7: PRESETLER ===== -->
+      <section id="adim-7" class="section-card">
+        <div class="flex items-start gap-4">
+          <div class="step-badge">★</div>
+          <div class="flex-1">
+            <span class="text-[0.65rem] font-semibold uppercase tracking-widest text-mint">Presetler</span>
+            <h2 class="font-display text-2xl font-bold">Ayarları Kaydet &amp; Yükle</h2>
+          </div>
+        </div>
+        <p class="mt-3 text-sm leading-relaxed text-muted">Beğendiğin stil, renk ve analiz kombinasyonunu preset olarak kaydet. Bir sonraki seferinde tek tıkla geri yükle.</p>
+
+        <div class="mt-6 grid gap-6 lg:grid-cols-2">
+          <div class="space-y-3 text-sm">
+            <div class="feature-card flex items-center gap-3 p-4">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/20 text-accent font-bold">1</div>
+              <div>
+                <strong class="block text-sm">Preset Adı Yaz</strong>
+                <p class="text-xs text-muted">Preset isim alanına istediğin bir ad gir: "Canlı Kırmızı", "Bass Heavy" vb.</p>
+              </div>
+            </div>
+            <div class="feature-card flex items-center gap-3 p-4">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/20 text-accent font-bold">2</div>
+              <div>
+                <strong class="block text-sm">"Kaydet" Butonuna Bas</strong>
+                <p class="text-xs text-muted">Tüm mevcut ayarlar (stil, renk, glow, konum, metin, kapak tipi) kaydedilir.</p>
+              </div>
+            </div>
+            <div class="feature-card flex items-center gap-3 p-4">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/20 text-accent font-bold">3</div>
+              <div>
+                <strong class="block text-sm">Listeden Seç</strong>
+                <p class="text-xs text-muted">Kaydedilen preset listesinde görünür. Üstüne tıkla — hepsi geri yüklenir.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preset list mockup -->
+          <div class="mockup-canvas p-4">
+            <div class="flex gap-2 mb-3">
+              <div class="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-muted">Preset adı...</div>
+              <button class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-cream">Kaydet</button>
+            </div>
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between rounded-xl border border-accent/30 bg-accent/10 px-3 py-2">
+                <span class="text-xs font-semibold text-accent">Canlı Kırmızı</span>
+                <div class="flex gap-1.5">
+                  <span class="text-[0.6rem] text-muted">Spectrum · Kırmızı</span>
+                  <button class="text-[0.6rem] text-[#ff6050] hover:text-red-300">Sil</button>
+                </div>
+              </div>
+              <div class="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 hover:border-accent/30 cursor-pointer">
+                <span class="text-xs">Bass Heavy</span>
+                <div class="flex gap-1.5">
+                  <span class="text-[0.6rem] text-muted">Mirror · Neon City</span>
+                  <button class="text-[0.6rem] text-[#ff6050]">Sil</button>
+                </div>
+              </div>
+              <div class="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 hover:border-accent/30 cursor-pointer">
+                <span class="text-xs">Ambient Lofi</span>
+                <div class="flex gap-1.5">
+                  <span class="text-[0.6rem] text-muted">Wave · Mono White</span>
+                  <button class="text-[0.6rem] text-[#ff6050]">Sil</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== ADIM 8: ÇIKTI ===== -->
+      <section id="adim-8" class="section-card">
+        <div class="flex items-start gap-4">
+          <div class="step-badge text-lg">8</div>
+          <div class="flex-1">
+            <span class="text-[0.65rem] font-semibold uppercase tracking-widest text-mint">Adım 8</span>
+            <h2 class="font-display text-2xl font-bold">Çıktı &amp; Export</h2>
+          </div>
+        </div>
+        <p class="mt-3 text-sm leading-relaxed text-muted">Kaydı başlatmadan önce export formatını belirle. Ayarı kayıt sırasında değiştirirsen yeni seçim sonraki kayda uygulanır.</p>
+
+        <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="feature-card p-4">
+            <div class="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff4d60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            </div>
+            <strong class="block text-sm">Çözünürlük</strong>
+            <div class="mt-2 space-y-1 text-xs text-muted">
+              <p><span class="text-cream font-semibold">1080p</span> — Önerilen, standart HD</p>
+              <p><span class="text-cream font-semibold">1440p</span> — 2K, keskin detay</p>
+              <p><span class="text-cream font-semibold">2160p</span> — 4K, maksimum kalite</p>
+              <p><span class="text-cream font-semibold">Preview ile aynı</span> — Ekrana göre</p>
+            </div>
+          </div>
+
+          <div class="feature-card p-4">
+            <div class="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff4d60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+            </div>
+            <strong class="block text-sm">Export Zemini</strong>
+            <div class="mt-2 space-y-1 text-xs text-muted">
+              <p><span class="text-cream font-semibold">Normal</span> — Sahne arka planıyla</p>
+              <p><span class="text-cream font-semibold">Blend on Black</span> — Siyah zemin</p>
+              <p><span class="text-cream font-semibold">Alpha Demo</span> — Şeffaf MOV</p>
+              <p><span class="text-cream font-semibold">Green Screen</span> — Kroma key için</p>
+              <p><span class="text-cream font-semibold">Blue Screen</span> — Mavi kroma</p>
+              <p><span class="text-cream font-semibold">Luma Matte</span> — Video düzenleme için</p>
+            </div>
+          </div>
+
+          <div class="feature-card p-4">
+            <div class="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff4d60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <strong class="block text-sm">Ekstra Seçenekler</strong>
+            <div class="mt-2 space-y-2 text-xs text-muted">
+              <p><span class="text-cream font-semibold">Overlay Temiz Çizim</span><br>Glow azaltılır, keying için net sınır.</p>
+              <p><span class="text-cream font-semibold">Canvas Başlığını Göster</span><br>Mod adı ve enerji rozeti canvas üstüne eklenir.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 rounded-2xl border border-accent/20 bg-accent/5 p-4 text-sm">
+          <strong class="text-accent">Önemli:</strong> <span class="text-muted">Alpha Demo modunda çıktı saydam arka planla MOV olarak kaydedilir. Video düzenleme programlarında katman olarak kullanabilirsin.</span>
+        </div>
+      </section>
+
+      <!-- ===== TRANSPORT ===== -->
+      <section id="transport" class="section-card">
+        <div class="mb-4 flex items-center gap-3">
+          <span class="text-[0.65rem] font-semibold uppercase tracking-widest text-mint">Transport Çubuğu</span>
+        </div>
+        <h2 class="font-display text-2xl font-bold">Oynatma &amp; Kayıt</h2>
+        <p class="mt-3 mb-6 text-sm leading-relaxed text-muted">Ekranın altındaki transport çubuğundan tüm oynatma ve kayıt işlemlerini kontrol edersin.</p>
+
+        <!-- Transport mockup -->
+        <div class="mockup-canvas mb-6 p-4">
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="flex h-8 w-20 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent2 text-xs font-bold">▶ Oynat</div>
+            <div class="flex h-8 w-24 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-xs">Kaydı Başlat</div>
+            <div class="flex h-8 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-xs">Döngü</div>
+            <div class="flex h-8 w-16 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-xs">Snapshot</div>
+            <div class="flex h-8 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-xs">Klip</div>
+            <span class="text-xs text-muted tabular-nums">01:23 / 03:47</span>
+            <div class="h-6 min-w-[80px] flex-1 rounded-lg border border-white/10 bg-black/30 overflow-hidden">
+              <div class="h-full w-2/5 rounded-lg" style="background: linear-gradient(90deg, rgba(232,23,42,0.6), rgba(255,77,96,0.3))"></div>
+            </div>
+            <div class="flex items-center gap-1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+              <div class="h-1.5 w-12 rounded-full" style="background: linear-gradient(90deg, rgba(232,23,42,0.75) 80%, rgba(255,255,255,0.12) 80%)"></div>
+            </div>
+            <div class="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="feature-card p-4">
+            <strong class="block text-sm">▶ Oynat / Duraklat</strong>
+            <p class="mt-1 text-xs text-muted">Müziği başlatır veya duraklatır. Görsel de aynı anda durur.</p>
+          </div>
+          <div class="feature-card p-4">
+            <div class="flex items-center gap-2">
+              <strong class="text-sm">Kaydı Başlat</strong>
+              <span class="rounded-full border border-[#ff6050]/40 bg-[#ff6050]/20 px-2 py-0.5 text-[0.6rem] text-[#ffe5df]">● Kayıt</span>
+            </div>
+            <p class="mt-1 text-xs text-muted">Canvas + ses birlikte MP4 olarak kaydedilir. Kayıt sırasında kırmızı rozet belirir.</p>
+          </div>
+          <div class="feature-card p-4">
+            <strong class="block text-sm">İndir</strong>
+            <p class="mt-1 text-xs text-muted">Kayıt bitince "İndir" bağlantısı belirir. Tıklayınca MP4/MOV bilgisayarına indirilir.</p>
+          </div>
+          <div class="feature-card p-4">
+            <strong class="block text-sm">Döngü</strong>
+            <p class="mt-1 text-xs text-muted">Aktifken parça bitince baştan başlar. Uzun kayıtlar için idealdir.</p>
+          </div>
+          <div class="feature-card p-4">
+            <strong class="block text-sm">Snapshot</strong>
+            <p class="mt-1 text-xs text-muted">O anki canvas görüntüsünü PNG olarak indirir. Sosyal medya paylaşımı için.</p>
+          </div>
+          <div class="feature-card p-4">
+            <strong class="block text-sm">Klip</strong>
+            <p class="mt-1 text-xs text-muted">5 saniyelik kısa video klip çeker ve anında indirir.</p>
+          </div>
+          <div class="feature-card p-4">
+            <strong class="block text-sm">İlerleme Çubuğu</strong>
+            <p class="mt-1 text-xs text-muted">Tıklayarak veya sürükleyerek parçanın herhangi bir noktasına atlayabilirsin.</p>
+          </div>
+          <div class="feature-card p-4">
+            <strong class="block text-sm">Ses Seviyesi</strong>
+            <p class="mt-1 text-xs text-muted">Sağ alttaki kaydırıcı — yalnızca önizleme sesini etkiler, kayıt sesi değişmez.</p>
+          </div>
+          <div class="feature-card p-4">
+            <strong class="block text-sm">Tam Ekran</strong>
+            <p class="mt-1 text-xs text-muted">Görsel alanı tam ekrana büyütür. Tekrar tıklamak veya <span class="key">Esc</span> ile çıkılır.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== KLAVYE KISAYOLLARI ===== -->
+      <section id="klavye" class="section-card">
+        <div class="mb-4 flex items-center gap-3">
+          <span class="text-[0.65rem] font-semibold uppercase tracking-widest text-mint">Klavye</span>
+        </div>
+        <h2 class="font-display text-2xl font-bold">Klavye Kısayolları</h2>
+        <p class="mt-3 mb-6 text-sm leading-relaxed text-muted">Hız için fare kullanmana gerek yok — her şeyin klavye kısayolu var.</p>
+
+        <div class="overflow-hidden rounded-2xl border border-white/10">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-white/10 bg-white/[0.03]">
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Tuş</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">İşlev</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              <tr class="hover:bg-white/[0.02]">
+                <td class="px-4 py-3"><span class="key">Space</span></td>
+                <td class="px-4 py-3 text-muted">Oynat / Duraklat</td>
+              </tr>
+              <tr class="hover:bg-white/[0.02]">
+                <td class="px-4 py-3"><span class="key">M</span></td>
+                <td class="px-4 py-3 text-muted">Sesi kapat / aç (mute toggle)</td>
+              </tr>
+              <tr class="hover:bg-white/[0.02]">
+                <td class="px-4 py-3"><span class="key">R</span></td>
+                <td class="px-4 py-3 text-muted">Kaydı başlat / durdur</td>
+              </tr>
+              <tr class="hover:bg-white/[0.02]">
+                <td class="px-4 py-3"><span class="key">L</span></td>
+                <td class="px-4 py-3 text-muted">Döngüyü aç / kapat</td>
+              </tr>
+              <tr class="hover:bg-white/[0.02]">
+                <td class="px-4 py-3"><span class="key">S</span></td>
+                <td class="px-4 py-3 text-muted">PNG snapshot al</td>
+              </tr>
+              <tr class="hover:bg-white/[0.02]">
+                <td class="px-4 py-3"><span class="key">C</span></td>
+                <td class="px-4 py-3 text-muted">5 saniyelik video klip çek</td>
+              </tr>
+              <tr class="hover:bg-white/[0.02]">
+                <td class="px-4 py-3 flex gap-1"><span class="key">←</span><span class="key">→</span></td>
+                <td class="px-4 py-3 text-muted">5 saniye geri / ileri atla</td>
+              </tr>
+              <tr class="hover:bg-white/[0.02]">
+                <td class="px-4 py-3"><span class="key">↑</span> <span class="key">↓</span></td>
+                <td class="px-4 py-3 text-muted">Ses seviyesini artır / azalt</td>
+              </tr>
+              <tr class="hover:bg-white/[0.02]">
+                <td class="px-4 py-3"><span class="key">Esc</span></td>
+                <td class="px-4 py-3 text-muted">Tam ekrandan çık</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== İPUÇLARI ===== -->
+      <section id="ipuclari" class="section-card">
+        <div class="mb-4 flex items-center gap-3">
+          <span class="text-[0.65rem] font-semibold uppercase tracking-widest text-mint">Profesyonel İpuçları</span>
+        </div>
+        <h2 class="font-display text-2xl font-bold">İpuçları &amp; Püf Noktaları</h2>
+
+        <div class="mt-6 grid gap-4 sm:grid-cols-2">
+          <div class="feature-card p-5">
+            <div class="mb-2 flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4d60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+              <strong class="text-sm">En İyi Görsel İçin</strong>
+            </div>
+            <p class="text-xs leading-relaxed text-muted">Hassasiyeti yavaşça artır, görsel barlar ekranın %70-80'ine kadar dolunca durdur. Daha yüksekse klipping oluşur.</p>
+          </div>
+          <div class="feature-card p-5">
+            <div class="mb-2 flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4d60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <strong class="text-sm">Kroma Key Kullanımı</strong>
+            </div>
+            <p class="text-xs leading-relaxed text-muted">Green Screen modunda kaydet, Premiere/DaVinci'de "Ultra Key" ile arka planı kaldır. Müzik video efektleri için mükemmel.</p>
+          </div>
+          <div class="feature-card p-5">
+            <div class="mb-2 flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4d60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              <strong class="text-sm">Preset Stratejisi</strong>
+            </div>
+            <p class="text-xs leading-relaxed text-muted">Her müzik türü için ayrı preset yap: "EDM Agresif", "Jazz Yumuşak", "Pop Canlı" gibi. Değiştirmek bir tık.</p>
+          </div>
+          <div class="feature-card p-5">
+            <div class="mb-2 flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4d60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <strong class="text-sm">Döngü + Kayıt</strong>
+            </div>
+            <p class="text-xs leading-relaxed text-muted">Döngüyü etkinleştir, ardından kayıt başlat. Parça birden fazla kez çalarken kayıt devam eder — uzun içerikler için ideal.</p>
+          </div>
+          <div class="feature-card p-5">
+            <div class="mb-2 flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4d60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              <strong class="text-sm">Albüm Kapağı Kompozisyonu</strong>
+            </div>
+            <p class="text-xs leading-relaxed text-muted">Kapağı "Arka Plan (Bulanık)" moduna al, görselin boyutunu artır. Üstüne Spectrum Bars görselini ekle — sinematik görünüm elde edersin.</p>
+          </div>
+          <div class="feature-card p-5">
+            <div class="mb-2 flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4d60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              <strong class="text-sm">Mikrofon ile Canlı Set</strong>
+            </div>
+            <p class="text-xs leading-relaxed text-muted">Mikrofon modunu aç, görsel seçimini yap, tam ekran yap. Canlı konser veya DJ seti için anında ekran görüntüsü. Kayıt da desteklenir.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== FOOTER ===== -->
+      <footer class="section-card border-t border-white/10 pt-8 text-center">
+        <div class="mb-4 inline-flex items-center gap-2">
+          <div class="h-px w-16 bg-gradient-to-r from-transparent to-accent/50"></div>
+          <div class="flex items-center gap-2.5">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs><linearGradient id="logo-c" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#e8172a"/><stop offset="1" stop-color="#6e000c"/></linearGradient></defs>
+              <rect width="28" height="28" rx="7" fill="url(#logo-c)"/>
+              <rect x="4"  y="7"  width="3" height="14" rx="1.5" fill="white"/>
+              <rect x="9"  y="14" width="3" height="7"  rx="1.5" fill="white" opacity=".6"/>
+              <rect x="13.5" y="10" width="3" height="11" rx="1.5" fill="white" opacity=".85"/>
+              <rect x="18.5" y="14" width="3" height="7"  rx="1.5" fill="white" opacity=".6"/>
+              <rect x="23" y="7"  width="2.5" height="14" rx="1.25" fill="white"/>
+            </svg>
+            <span class="font-display text-xl font-bold">MoS Rhythm</span>
+          </div>
+          <div class="h-px w-16 bg-gradient-to-l from-transparent to-accent/50"></div>
+        </div>
+        <p class="text-sm text-muted">Tamamen yerel · MP4 / Şeffaf MOV çıktı · Gizliliğin korunur</p>
+        <div class="mt-6">
+          <a href="index.html" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-accent to-accent2 px-6 py-3 font-bold text-white shadow-lg shadow-accent/30 transition hover:from-[#ff1a2e] hover:to-accent">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Uygulamayı Başlat
+          </a>
+        </div>
+      </footer>
+
+    </main>
+  </div>
+
+  <!-- SVG bar animations -->
+  <style>
+    @keyframes b1 { from { transform: scaleY(0.2); } to { transform: scaleY(1); } }
+    @keyframes b2 { from { transform: scaleY(0.4); } to { transform: scaleY(0.9); } }
+    @keyframes b3 { from { transform: scaleY(0.3); } to { transform: scaleY(1); } }
+    @keyframes b4 { from { transform: scaleY(0.5); } to { transform: scaleY(0.95); } }
+    @keyframes b5 { from { transform: scaleY(0.25); } to { transform: scaleY(0.85); } }
+    @keyframes b6 { from { transform: scaleY(0.45); } to { transform: scaleY(1); } }
+    @keyframes b7 { from { transform: scaleY(0.15); } to { transform: scaleY(0.9); } }
+  </style>
+
+  <script>
+    // Active nav link on scroll
+    const sections = document.querySelectorAll('section[id], header');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          navLinks.forEach(l => {
+            l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+          });
+        }
+      });
+    }, { rootMargin: '-30% 0px -60% 0px' });
+
+    sections.forEach(s => obs.observe(s));
+  </script>
+</body>
+</html>

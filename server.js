@@ -1,8 +1,14 @@
 const http = require("http");
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 const crypto = require("crypto");
 const { spawn } = require("child_process");
+
+// ffmpeg, gorunur CPU sayisi kadar thread acar. Railway gibi cok-cekirdek goren
+// ama RAM'i kisitli konteynerlerde bu, ProRes encode sirasinda bellegi tasirip
+// surecin OOM ile oldurulmesine yol acar. Thread'i sinirlamak tepe bellegi dusurur.
+const FFMPEG_THREADS = String(process.env.FFMPEG_THREADS || 2);
 
 const ROOT_DIR = __dirname;
 const DEFAULT_PORT = Number(process.env.PORT || 4174);
@@ -179,6 +185,27 @@ function runProcess(command, args) {
   });
 }
 
+function readCgroupMemoryLimitMB() {
+  // Konteynerin gercek bellek limiti (cgroup v2 veya v1). os.totalmem() host'u gosterir,
+  // konteyner limitini degil; OOM teshisi icin cgroup limiti gerekir.
+  const candidates = [
+    "/sys/fs/cgroup/memory.max",
+    "/sys/fs/cgroup/memory/memory.limit_in_bytes"
+  ];
+  for (const file of candidates) {
+    try {
+      const raw = fs.readFileSync(file, "utf8").trim();
+      if (raw && raw !== "max") {
+        const bytes = Number(raw);
+        if (Number.isFinite(bytes) && bytes > 0 && bytes < 1e15) {
+          return Math.round(bytes / 1048576);
+        }
+      }
+    } catch {}
+  }
+  return null;
+}
+
 async function probeBinary(bin) {
   // Binary'yi gercekten calistirip versiyonunu alir. fs.existsSync ciplak
   // komutlar ("ffmpeg") icin yaniltici oldugundan kesin sonuc icin bunu kullaniriz.
@@ -308,6 +335,7 @@ async function transcodeRecording(inputBuffer, options = {}) {
         "-y", "-i", inputFile, "-i", matteFile,
         "-filter_complex", filterComplex,
         "-map", "[outv]", "-map", "0:a?",
+        "-threads", FFMPEG_THREADS,
         "-c:v", "prores_ks",
         "-profile:v", "4",
         "-pix_fmt", "yuva444p10le",
@@ -334,6 +362,7 @@ async function transcodeRecording(inputBuffer, options = {}) {
 
       await runProcess(ffmpegPath, [
         "-y", "-i", inputFile,
+        "-threads", FFMPEG_THREADS,
         "-c:v", "prores_ks",
         "-profile:v", "4",
         "-pix_fmt", "yuva444p10le",
@@ -353,6 +382,8 @@ async function transcodeRecording(inputBuffer, options = {}) {
       "-y",
       "-i",
       inputFile,
+      "-threads",
+      FFMPEG_THREADS,
       "-c:v",
       "libx264",
       "-preset",
@@ -476,7 +507,11 @@ const server = http.createServer((request, response) => {
           ffprobePath,
           ffmpeg,
           ffprobe,
-          ready: ffmpeg.ok && ffprobe.ok
+          ready: ffmpeg.ok && ffprobe.ok,
+          ffmpegThreads: FFMPEG_THREADS,
+          cpus: os.cpus().length,
+          memoryLimitMB: readCgroupMemoryLimitMB(),
+          hostTotalMB: Math.round(os.totalmem() / 1048576)
         });
       })
       .catch((error) => {

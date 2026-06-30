@@ -256,6 +256,14 @@ details[open] > summary .step-sub {
   color: rgba(255, 255, 255, 0.6);
 }
 
+/* KULLANIM butonunun yuvarlak "?" rozeti — kirmizi (aktif adim rozetiyle uyumlu) */
+.sidebar-scroll .step-num-help {
+  background: #e8172a;
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(232, 23, 42, 0.4);
+}
+
 /* Sidebar kaydirma cubugu */
 .sidebar-scroll {
   scrollbar-width: thin;

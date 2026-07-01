@@ -290,6 +290,7 @@ const state = {
   analyser: null,
   sourceNode: null,
   mediaDestination: null,
+  recordAudioDest: null,
   frequencyData: null,
   waveformData: null,
   objectUrl: null,
@@ -1082,12 +1083,27 @@ function startRecording() {
   }
 }
 
+// Her kayit icin TAZE bir ses hedefi (MediaStreamDestination) uretir.
+// Ayni WebAudio destination track'ini ikinci bir MediaRecorder'a vermek Chrome'da
+// sessiz kayda yol acar; bu yuzden her kayitta analiz cikisindan yeni bir hedef alinir.
+function freshRecordingAudioTracks() {
+  if (!state.audioContext || !state.analyser) return [];
+  if (state.recordAudioDest) {
+    try { state.analyser.disconnect(state.recordAudioDest); } catch (_) {}
+    state.recordAudioDest = null;
+  }
+  const dest = state.audioContext.createMediaStreamDestination();
+  state.analyser.connect(dest);
+  state.recordAudioDest = dest;
+  return dest.stream.getAudioTracks();
+}
+
 function startStandardRecording(recordingProfile, mimeType) {
   const fps = recordingProfile.exportFps || 30;
   const canvasStream = dom.canvas.captureStream(fps);
   const combinedStream = new MediaStream([
     ...canvasStream.getVideoTracks(),
-    ...state.mediaDestination.stream.getAudioTracks()
+    ...freshRecordingAudioTracks()
   ]);
   const recorder = new MediaRecorder(combinedStream, getRecorderOptions(mimeType));
   state.recorderChunks = [];
@@ -1123,7 +1139,7 @@ function startTransparentRecording(recordingProfile, mimeType) {
   const matteStream = exportSurfaces.matteCanvas.captureStream(fps);
   const combinedColorStream = new MediaStream([
     ...colorStream.getVideoTracks(),
-    ...state.mediaDestination.stream.getAudioTracks()
+    ...freshRecordingAudioTracks()
   ]);
   const colorRecorder = new MediaRecorder(combinedColorStream, getRecorderOptions(mimeType));
   const matteRecorder = new MediaRecorder(matteStream, getRecorderOptions(pickVideoOnlyMimeType(), false));
@@ -1161,11 +1177,14 @@ async function finalizeStoppedRecording({ rawBlob, recordingProfile, matteBlob =
   const wasPlaying = !dom.audioPlayer.paused && !dom.audioPlayer.ended;
   const playbackEnded = dom.audioPlayer.ended;
 
-  // Yalnizca video (canvas capture) track'lerini durdur. Ses track'i
-  // paylasilan mediaDestination'dan gelir; durdurulursa kalici olarak biter ve
-  // sonraki kayitlarda ses gelmez. Bu yuzden ses track'ine dokunulmaz.
-  state.recorderTracks.forEach((track) => { if (track.kind === "video") track.stop(); });
-  state.auxiliaryRecorderTracks.forEach((track) => { if (track.kind === "video") track.stop(); });
+  // Kayit track'lerini durdur. Ses artik her kayitta taze bir hedeften geldigi
+  // icin durdurmak sonraki kayitlari etkilemez. Taze ses hedefini de cozup birak.
+  state.recorderTracks.forEach((track) => track.stop());
+  state.auxiliaryRecorderTracks.forEach((track) => track.stop());
+  if (state.recordAudioDest && state.analyser) {
+    try { state.analyser.disconnect(state.recordAudioDest); } catch (_) {}
+  }
+  state.recordAudioDest = null;
   state.recorderTracks = [];
   state.auxiliaryRecorderTracks = [];
   state.recorder = null;

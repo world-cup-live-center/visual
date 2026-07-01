@@ -380,7 +380,13 @@
           .demo-canvas[data-style="0"]{--c1:#fff;--c2:#e6122b}
           .demo-canvas[data-style="1"]{--c1:#1dc5ff;--c2:#ff54b9}
           .demo-canvas[data-style="2"]{--c1:#ff9754;--c2:#85e3c4}
-          .demo-badge{position:absolute;top:8px;left:10px;font-size:10px;color:#bbb;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.08);border-radius:99px;padding:2px 8px}
+          .demo-badge{position:absolute;top:8px;left:10px;font-size:10px;color:#bbb;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.08);border-radius:99px;padding:2px 8px;z-index:5}
+          .demo-art{position:absolute;top:8px;right:10px;width:50px;height:50px;border-radius:8px;background:linear-gradient(135deg,#e8172a,#3a0a10);border:1px solid rgba(255,255,255,.2);box-shadow:0 4px 12px rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.6);transition:.45s;z-index:5}
+          .demo-art.show{opacity:1;transform:scale(1)}
+          .demo-otext{position:absolute;left:12px;top:42%;text-align:left;opacity:0;transform:translateY(8px);transition:.45s;z-index:5}
+          .demo-otext strong{display:block;color:#fff;font-size:14px;font-weight:800;letter-spacing:.05em;text-shadow:0 1px 5px rgba(0,0,0,.85)}
+          .demo-otext span{display:block;color:#ff8a97;font-size:10px;text-shadow:0 1px 4px rgba(0,0,0,.85)}
+          .demo-otext.show{opacity:1;transform:translateY(0)}
           .demo-cursor{position:absolute;left:20%;top:30%;transform:translate(-50%,-50%);transition:left .85s cubic-bezier(.5,0,.3,1),top .85s cubic-bezier(.5,0,.3,1);pointer-events:none;z-index:10;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
           .demo-cursor.click{animation:demoClick .35s ease}
           @keyframes demoClick{50%{transform:translate(-50%,-50%) scale(.7)}}
@@ -413,6 +419,8 @@
               </div>
               <div class="demo-canvas" id="demo-canvas" data-style="0">
                 <div class="demo-badge">MoS Rhythm</div>
+                <div class="demo-art" id="demo-art"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="9"/></svg></div>
+                <div class="demo-otext" id="demo-otext"><strong>MOS</strong><span>Gece Ritmi</span></div>
                 <div class="demo-bars" id="demo-bars"></div>
               </div>
             </div>
@@ -1400,6 +1408,7 @@
             styleName = q("demo-style-name"), canvas = q("demo-canvas"), glowFill = q("demo-glow"),
             knob = q("demo-knob"), rec = q("demo-rec"), recTxt = q("demo-rec-txt"),
             toast = q("demo-toast"), dotsWrap = q("demo-dots"), barsWrap = q("demo-bars"),
+            artEl = q("demo-art"), otextEl = q("demo-otext"),
             playIco = playBtn.querySelector(".demo-play-ico");
 
       // Barlar (spektrum)
@@ -1411,7 +1420,7 @@
         barsWrap.appendChild(b);
       }
       // Adim noktalari
-      const STEPS = 5;
+      const STEPS = 7;
       for (let i = 0; i < STEPS; i++) dotsWrap.appendChild(document.createElement("span"));
       const dots = dotsWrap.children;
 
@@ -1435,6 +1444,7 @@
         playBtn.classList.remove("primary"); playIco.textContent = "▶";
         glowFill.style.width = "25%"; knob.style.left = "25%";
         rec.classList.remove("on"); recTxt.textContent = "Kaydı Başlat";
+        artEl.classList.remove("show"); otextEl.classList.remove("show");
         toast.classList.remove("show");
       }
 
@@ -1463,8 +1473,18 @@
           await moveTo(knob);
           glowFill.style.width = "85%"; knob.style.left = "85%"; canvas.classList.add("glow");
           await delay(1500);
-          // 5 · Export
-          activeDot(4); caption.textContent = "5 · Export → MOV";
+          // 5 · Albüm yazısı (overlay)
+          activeDot(4); caption.textContent = "5 · Albüm yazısı ekle";
+          await moveTo(otextEl); await clickFx();
+          otextEl.classList.add("show");
+          await delay(1500);
+          // 6 · Albüm kapağı
+          activeDot(5); caption.textContent = "6 · Albüm kapağı ekle";
+          await moveTo(artEl); await clickFx();
+          artEl.classList.add("show");
+          await delay(1500);
+          // 7 · Export
+          activeDot(6); caption.textContent = "7 · Export → MOV";
           await moveTo(rec); await clickFx();
           rec.classList.add("on"); recTxt.textContent = "Kaydediliyor…";
           await delay(1700);

@@ -1,7 +1,7 @@
 {
   "name": "rhythm-forge-visualizer",
   "version": "1.1.0",
-  "description": "Yerel muzik visualizer — MP4 ve saydam MOV cikti",
+  "description": "Muzik visualizer — tarayicida gorsellestirme, MP4 ve saydam MOV cikti",
   "private": true,
   "engines": {
     "node": ">=18"

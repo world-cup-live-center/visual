@@ -1001,7 +1001,7 @@ async function togglePlayback() {
 
 async function toggleRecording() {
   if (state.isFinalizingRecording) {
-    setStatus("paused", "Onceki kayit yerelde isleniyor. Bir kac saniye bekleyip tekrar dene.");
+    setStatus("paused", "Onceki kayit isleniyor. Bir kac saniye bekleyip tekrar dene.");
     return;
   }
 
@@ -1155,7 +1155,7 @@ async function finalizeStoppedRecording({ rawBlob, recordingProfile, matteBlob =
   dom.recordToggle.disabled = true;
   dom.recordToggle.textContent = "Video Isleniyor";
   dom.recordingPill.hidden = true;
-  setStatus("recording", "Kayit alindi. Video yerelde isleniyor, bu bir kac saniye surebilir.");
+  setStatus("recording", "Kayit alindi. Video isleniyor, bu bir kac saniye surebilir.");
 
   try {
     const result = await finalizeRecordingBlob(rawBlob, recordingProfile, matteBlob);
@@ -2628,8 +2628,8 @@ function buildRecordingWarningMessage(code, detail) {
   const extra = detail ? ` (${detail.substring(0, 120)})` : "";
   if (code === "FFMPEG_MISSING") return `FFmpeg bulunamadi — ffmpeg yukle, sunucuyu yeniden baslat.${extra}`;
   if (code === "ALPHA_UNAVAILABLE") return `Alpha kanali uretilemedi. Chrome kullan.${extra}`;
-  if (code === "TRANSCODE_ROUTE_MISSING") return `SUNUCU CALISMIYOR! 'node server.js' calistir, http://localhost:4174 ac.${extra}`;
-  return `MOV donusumu basarisiz — sunucu kapali veya FFmpeg hatasi. Ham WebM indirildi.${extra}`;
+  if (code === "TRANSCODE_ROUTE_MISSING") return `Sunucuya ulasilamadi — internet baglantini kontrol edip sayfayi yenile.${extra}`;
+  return `MOV donusumu basarisiz — sunucu gecici olarak yanit vermedi. Ham WebM indirildi, tekrar dene.${extra}`;
 }
 
 function buildRecordingReadyMessage(fileName) {
@@ -2733,8 +2733,8 @@ async function checkServerAvailability() {
     if (!res.ok) throw new Error("not ok");
   } catch {
     setStatus("error",
-      "SUNUCU CALISMIYOR! Terminali ac ve 'node server.js' calistir, sonra http://localhost:4174 adresini ac. " +
-      "Sunucu olmadan MOV cikti VERILMEZ."
+      "Sunucuya ulasilamiyor. Internet baglantini kontrol edip sayfayi yenile. " +
+      "Sunucu olmadan MOV/MP4 cikti alinamaz (gorsellestirme calismaya devam eder)."
     );
   }
 }

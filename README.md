@@ -1,9 +1,10 @@
 # Rhythm Forge — Müzik Visualizer
 
 Müzik dosyanı tarayıcıda gerçek zamanlı analiz edip ritme uyumlu görseller çizen,
-istersen sonucu MP4 ya da saydam (alpha) MOV video olarak dışa aktarabilen yerel bir
-müzik görselleştirme stüdyosu. Dış kütüphane kullanmaz — saf JavaScript, Canvas 2D ve
-Web Audio API ile çalışır.
+istersen sonucu MP4 ya da saydam (alpha) MOV video olarak dışa aktarabilen bir
+müzik görselleştirme stüdyosu. Görselleştirme ve analiz tarayıcıda çalışır; MP4/MOV
+dönüşümü sunucudaki FFmpeg ile yapılır. Dış kütüphane kullanmaz — saf JavaScript,
+Canvas 2D ve Web Audio API ile çalışır. Canlı: https://visual-production-b3fc.up.railway.app
 
 ## Özellikler
 
@@ -14,7 +15,7 @@ Web Audio API ile çalışır.
 - Canlı analiz göstergeleri: Enerji / Bass / Mid / High / Peak frekans / Zaman
 - Kayıt ve export: MP4 (libx264) veya saydam MOV (ProRes 4444, alpha kanallı)
 - Green Screen / Blue Screen / Luma Matte / Blend on Black export zeminleri
-- Müzik dosyası dışarı gönderilmez; tamamen yerelde işlenir
+- Müzik dosyası sunucuya yüklenmez; yalnızca tarayıcıda görselleştirme için kullanılır (sunucuya sadece dışa aktarılan video, dönüşüm için gönderilir)
 
 ## Dosyalar
 

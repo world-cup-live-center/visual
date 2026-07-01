@@ -314,7 +314,7 @@
       <div class="sticky top-8 rounded-2xl border border-white/10 bg-black/60 p-4 backdrop-blur-xl">
         <p class="mb-3 text-[0.65rem] font-semibold uppercase tracking-widest text-muted">İçindekiler</p>
         <ul class="flex flex-col gap-0.5 text-sm">
-          <li><a href="#video"      class="nav-link block py-1.5 text-muted pl-2 border-l border-transparent">🎬 Video Anlatım</a></li>
+          <li><a href="#video"      class="nav-link block py-1.5 text-muted pl-2 border-l border-transparent">🎬 Canlı Anlatım</a></li>
           <li><a href="#baslangic"  class="nav-link block py-1.5 text-muted pl-2 border-l border-transparent">Başlangıç</a></li>
           <li><a href="#adim-1"     class="nav-link block py-1.5 text-muted pl-2 border-l border-transparent">1 · Ses Yükle</a></li>
           <li><a href="#adim-2"     class="nav-link block py-1.5 text-muted pl-2 border-l border-transparent">2 · Stil Seç</a></li>
@@ -343,16 +343,85 @@
       <!-- ===== VIDEO ANLATIM ===== -->
       <section id="video" class="section-card">
         <div class="mb-6 flex items-center gap-3">
-          <span class="text-[0.65rem] font-semibold uppercase tracking-widest text-mint">Video Anlatım</span>
+          <span class="text-[0.65rem] font-semibold uppercase tracking-widest text-mint">Canlı Anlatım</span>
         </div>
         <h2 class="font-display text-3xl font-bold">Baştan Sona Nasıl Kullanılır?</h2>
         <p class="mt-3 text-base leading-relaxed text-muted">
-          Müziği yüklemekten video çıktısı almaya kadar tüm adımları kısa bir videoda izle.
+          Müziği yüklemekten video çıktısı almaya kadar tüm adımları aşağıdaki canlı anlatımda izle — otomatik oynar.
         </p>
+
+        <style>
+          .demo-stage{background:radial-gradient(circle at 80% 20%,rgba(232,23,42,.14),transparent 45%),linear-gradient(160deg,#0a0406,#050202);user-select:none}
+          .demo-grid{position:absolute;inset:0;display:flex;gap:10px;padding:12px}
+          .demo-panel{width:38%;max-width:230px;display:flex;flex-direction:column;gap:8px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px}
+          .demo-label{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#8a8a8a}
+          .demo-row{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:7px 9px;display:flex;align-items:center;gap:8px;transition:border-color .3s,background .3s}
+          .demo-row.hot{border-color:rgba(232,23,42,.6);background:rgba(232,23,42,.08)}
+          .demo-dot{width:8px;height:8px;border-radius:50%;background:#444;flex-shrink:0;transition:background .3s}
+          .demo-row.hot .demo-dot{background:#e8172a}
+          .demo-track{font-size:12px;color:#eee}
+          .demo-style-name{font-size:12px;color:#eee;font-weight:600}
+          .demo-btn{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);border-radius:9px;padding:8px;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px;transition:.3s}
+          .demo-btn.primary{background:linear-gradient(135deg,#e8172a,#b5101d);border-color:transparent;font-weight:700}
+          .demo-play-ico{font-size:10px}
+          .demo-rec .demo-rec-dot{width:9px;height:9px;border-radius:50%;background:#e8172a;display:inline-block}
+          .demo-rec.on{border-color:rgba(232,23,42,.7);color:#ff6b76}
+          .demo-rec.on .demo-rec-dot{animation:demoBlink .7s steps(2) infinite}
+          @keyframes demoBlink{50%{opacity:.2}}
+          .demo-slider{position:relative;flex:1;height:6px;border-radius:99px;background:rgba(255,255,255,.12)}
+          .demo-slider-fill{position:absolute;left:0;top:0;bottom:0;width:25%;border-radius:99px;background:linear-gradient(90deg,#e8172a,#ff6b76);transition:width .9s ease}
+          .demo-knob{position:absolute;top:50%;left:25%;width:12px;height:12px;border-radius:50%;background:#fff;transform:translate(-50%,-50%);transition:left .9s ease}
+          .demo-canvas{flex:1;position:relative;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#060202,#0b0305);display:flex;align-items:flex-end;justify-content:center;padding:14px}
+          .demo-bars{display:flex;align-items:flex-end;gap:3px;height:82%;width:92%}
+          .demo-bar{flex:1;border-radius:3px 3px 0 0;height:12%;background:linear-gradient(180deg,var(--c1,#fff),var(--c2,#e8172a));animation:demoBar .9s ease-in-out infinite alternate;animation-play-state:paused}
+          .demo-canvas.playing .demo-bar{animation-play-state:running}
+          .demo-canvas.glow .demo-bar{filter:drop-shadow(0 0 5px var(--c2,#e8172a))}
+          @keyframes demoBar{from{height:12%}to{height:100%}}
+          .demo-canvas[data-style="0"]{--c1:#fff;--c2:#e6122b}
+          .demo-canvas[data-style="1"]{--c1:#1dc5ff;--c2:#ff54b9}
+          .demo-canvas[data-style="2"]{--c1:#ff9754;--c2:#85e3c4}
+          .demo-badge{position:absolute;top:8px;left:10px;font-size:10px;color:#bbb;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.08);border-radius:99px;padding:2px 8px}
+          .demo-cursor{position:absolute;left:20%;top:30%;transform:translate(-50%,-50%);transition:left .85s cubic-bezier(.5,0,.3,1),top .85s cubic-bezier(.5,0,.3,1);pointer-events:none;z-index:10;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
+          .demo-cursor.click{animation:demoClick .35s ease}
+          @keyframes demoClick{50%{transform:translate(-50%,-50%) scale(.7)}}
+          .demo-caption{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.1);border-radius:99px;padding:5px 14px;font-size:12px;color:#fff;white-space:nowrap;z-index:11}
+          .demo-toast{position:absolute;right:12px;top:12px;background:rgba(12,7,8,.92);border:1px solid rgba(80,220,140,.4);color:#7ee6a8;border-radius:10px;padding:8px 12px;font-size:12px;opacity:0;transform:translateY(-6px);transition:.35s;z-index:12}
+          .demo-toast.show{opacity:1;transform:translateY(0)}
+          .demo-dots{position:absolute;left:12px;bottom:12px;display:flex;gap:5px;z-index:11}
+          .demo-dots span{width:14px;height:4px;border-radius:99px;background:rgba(255,255,255,.2);transition:background .3s}
+          .demo-dots span.on{background:#e8172a}
+        </style>
+
         <div class="mt-6">
-          <div id="yt-facade" class="group relative aspect-video w-full cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-black">
-            <!-- JS ile doldurulur: thumbnail + oynat, ya da 'yakında' -->
+          <div id="demo-stage" class="demo-stage relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10">
+            <div class="demo-grid">
+              <div class="demo-panel">
+                <div class="demo-row" id="demo-file">
+                  <span class="demo-dot"></span>
+                  <div><div class="demo-label">1 · Ses</div><div class="demo-track" id="demo-track">Dosya seç…</div></div>
+                </div>
+                <button class="demo-btn" id="demo-play"><span class="demo-play-ico">▶</span> Oynat</button>
+                <div class="demo-row" id="demo-style">
+                  <span class="demo-dot"></span>
+                  <div><div class="demo-label">2 · Stil</div><div class="demo-style-name" id="demo-style-name">Spectrum Bars</div></div>
+                </div>
+                <div class="demo-row">
+                  <div class="demo-label">Glow</div>
+                  <div class="demo-slider"><span class="demo-slider-fill" id="demo-glow"></span><span class="demo-knob" id="demo-knob"></span></div>
+                </div>
+                <button class="demo-btn demo-rec" id="demo-rec"><span class="demo-rec-dot"></span><span id="demo-rec-txt">Kaydı Başlat</span></button>
+              </div>
+              <div class="demo-canvas" id="demo-canvas" data-style="0">
+                <div class="demo-badge">MoS Rhythm</div>
+                <div class="demo-bars" id="demo-bars"></div>
+              </div>
+            </div>
+            <div class="demo-cursor" id="demo-cursor"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff" stroke="#000" stroke-width="1"><path d="M4 2 L4 20 L9 15 L12 21 L15 20 L12 14 L19 14 Z"/></svg></div>
+            <div class="demo-toast" id="demo-toast">MOV indirildi ✓</div>
+            <div class="demo-caption" id="demo-caption">Hazır</div>
+            <div class="demo-dots" id="demo-dots"></div>
           </div>
+          <p class="mt-2 text-center text-xs text-muted">Otomatik oynayan canlı anlatım · gerçek uygulamanın akışını temsil eder</p>
         </div>
       </section>
 
@@ -1321,48 +1390,92 @@
   </script>
 
   <script>
-    // ── Video anlatım (YouTube, tıklayınca yüklenir) ─────────────────────────
-    // Video hazır olunca aşağıdaki ID'yi doldur (YouTube linkindeki v= sonrası,
-    // örn. https://youtu.be/ABC123xyz  ->  YT_VIDEO_ID = "ABC123xyz").
-    const YT_VIDEO_ID = "";
-
+    // ── Canlı anlatım animasyonu (otomatik oynayan, dongusel) ────────────────
     (function () {
-      const el = document.getElementById("yt-facade");
-      if (!el) return;
+      const stage = document.getElementById("demo-stage");
+      if (!stage) return;
+      const q = (id) => document.getElementById(id);
+      const cursor = q("demo-cursor"), caption = q("demo-caption"), trackEl = q("demo-track"),
+            fileRow = q("demo-file"), playBtn = q("demo-play"), styleRow = q("demo-style"),
+            styleName = q("demo-style-name"), canvas = q("demo-canvas"), glowFill = q("demo-glow"),
+            knob = q("demo-knob"), rec = q("demo-rec"), recTxt = q("demo-rec-txt"),
+            toast = q("demo-toast"), dotsWrap = q("demo-dots"), barsWrap = q("demo-bars"),
+            playIco = playBtn.querySelector(".demo-play-ico");
 
-      if (!YT_VIDEO_ID) {
-        el.classList.remove("cursor-pointer");
-        el.innerHTML =
-          '<div class="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">' +
-            '<div class="flex h-16 w-16 items-center justify-center rounded-full border border-white/15 bg-white/5">' +
-              '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7a7a7a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>' +
-            '</div>' +
-            '<strong class="text-lg">Video yakında eklenecek</strong>' +
-            '<span class="text-sm text-muted">Tanıtım videosu hazırlanınca burada oynatılacak.</span>' +
-          '</div>';
-        return;
+      // Barlar (spektrum)
+      for (let i = 0; i < 30; i++) {
+        const b = document.createElement("span");
+        b.className = "demo-bar";
+        b.style.animationDuration = (0.6 + (i % 7) * 0.07).toFixed(2) + "s";
+        b.style.animationDelay = "-" + ((i * 0.13) % 1).toFixed(2) + "s";
+        barsWrap.appendChild(b);
+      }
+      // Adim noktalari
+      const STEPS = 5;
+      for (let i = 0; i < STEPS; i++) dotsWrap.appendChild(document.createElement("span"));
+      const dots = dotsWrap.children;
+
+      const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+      const activeDot = (n) => { for (let i = 0; i < dots.length; i++) dots[i].classList.toggle("on", i === n); };
+
+      function moveTo(el) {
+        const s = stage.getBoundingClientRect(), r = el.getBoundingClientRect();
+        cursor.style.left = (r.left - s.left + r.width / 2) + "px";
+        cursor.style.top = (r.top - s.top + r.height / 2) + "px";
+        return delay(850);
+      }
+      async function clickFx() { cursor.classList.add("click"); await delay(350); cursor.classList.remove("click"); }
+
+      function reset() {
+        canvas.classList.remove("playing", "glow");
+        canvas.dataset.style = "0";
+        styleName.textContent = "Spectrum Bars";
+        trackEl.textContent = "Dosya seç…";
+        fileRow.classList.remove("hot"); styleRow.classList.remove("hot");
+        playBtn.classList.remove("primary"); playIco.textContent = "▶";
+        glowFill.style.width = "25%"; knob.style.left = "25%";
+        rec.classList.remove("on"); recTxt.textContent = "Kaydı Başlat";
+        toast.classList.remove("show");
       }
 
-      const thumb = "https://i.ytimg.com/vi/" + YT_VIDEO_ID + "/maxresdefault.jpg";
-      el.innerHTML =
-        '<img src="' + thumb + '" alt="Video önizleme" class="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105" />' +
-        '<div class="absolute inset-0 bg-black/35 transition group-hover:bg-black/20"></div>' +
-        '<div class="absolute inset-0 flex items-center justify-center">' +
-          '<div class="flex h-20 w-20 items-center justify-center rounded-full bg-accent shadow-lg shadow-accent/40 transition group-hover:scale-110">' +
-            '<svg width="30" height="30" viewBox="0 0 24 24" fill="white"><polygon points="6 4 20 12 6 20 6 4"/></svg>' +
-          '</div>' +
-        '</div>';
+      async function run() {
+        while (true) {
+          reset(); await delay(700);
+          // 1 · Ses yükle
+          activeDot(0); caption.textContent = "1 · Müziği yükle";
+          await moveTo(fileRow); await clickFx();
+          fileRow.classList.add("hot"); trackEl.textContent = "gece-ritmi.mp3";
+          await delay(1100); fileRow.classList.remove("hot");
+          // 2 · Oynat
+          activeDot(1); caption.textContent = "2 · Oynat";
+          await moveTo(playBtn); await clickFx();
+          playBtn.classList.add("primary"); playIco.textContent = "❚❚"; canvas.classList.add("playing");
+          await delay(1700);
+          // 3 · Stil & renk
+          activeDot(2); caption.textContent = "3 · Stil & renk seç";
+          await moveTo(styleRow); await clickFx();
+          canvas.dataset.style = "1"; styleName.textContent = "Neon City"; styleRow.classList.add("hot");
+          await delay(1200); await clickFx();
+          canvas.dataset.style = "2"; styleName.textContent = "Aurora Wave";
+          await delay(1200); styleRow.classList.remove("hot");
+          // 4 · İnce ayar (glow)
+          activeDot(3); caption.textContent = "4 · İnce ayar (glow)";
+          await moveTo(knob);
+          glowFill.style.width = "85%"; knob.style.left = "85%"; canvas.classList.add("glow");
+          await delay(1500);
+          // 5 · Export
+          activeDot(4); caption.textContent = "5 · Export → MOV";
+          await moveTo(rec); await clickFx();
+          rec.classList.add("on"); recTxt.textContent = "Kaydediliyor…";
+          await delay(1700);
+          recTxt.textContent = "Kaydı Başlat"; rec.classList.remove("on");
+          toast.classList.add("show");
+          await delay(2100); toast.classList.remove("show");
+          await delay(500);
+        }
+      }
 
-      el.addEventListener("click", function () {
-        const iframe = document.createElement("iframe");
-        iframe.src = "https://www.youtube-nocookie.com/embed/" + YT_VIDEO_ID + "?autoplay=1&rel=0";
-        iframe.className = "absolute inset-0 h-full w-full";
-        iframe.setAttribute("frameborder", "0");
-        iframe.setAttribute("allow", "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture");
-        iframe.allowFullscreen = true;
-        el.innerHTML = "";
-        el.appendChild(iframe);
-      }, { once: true });
+      requestAnimationFrame(() => requestAnimationFrame(run));
     })();
   </script>
 </body>

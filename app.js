@@ -1161,8 +1161,11 @@ async function finalizeStoppedRecording({ rawBlob, recordingProfile, matteBlob =
   const wasPlaying = !dom.audioPlayer.paused && !dom.audioPlayer.ended;
   const playbackEnded = dom.audioPlayer.ended;
 
-  state.recorderTracks.forEach((track) => track.stop());
-  state.auxiliaryRecorderTracks.forEach((track) => track.stop());
+  // Yalnizca video (canvas capture) track'lerini durdur. Ses track'i
+  // paylasilan mediaDestination'dan gelir; durdurulursa kalici olarak biter ve
+  // sonraki kayitlarda ses gelmez. Bu yuzden ses track'ine dokunulmaz.
+  state.recorderTracks.forEach((track) => { if (track.kind === "video") track.stop(); });
+  state.auxiliaryRecorderTracks.forEach((track) => { if (track.kind === "video") track.stop(); });
   state.recorderTracks = [];
   state.auxiliaryRecorderTracks = [];
   state.recorder = null;

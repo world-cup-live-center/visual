@@ -50,3 +50,23 @@ otomatik olarak sonraki uygun portu dener.
 | `HOST`         | Bağlanılacak host (varsayılan 0.0.0.0)    |
 | `FFMPEG_PATH`  | ffmpeg çalıştırılabilir dosya yolu        |
 | `FFPROBE_PATH` | ffprobe çalıştırılabilir dosya yolu       |
+| `FFMPEG_THREADS` | ffmpeg thread limiti (varsayılan 2, OOM'a karşı) |
+
+## Hesap sistemi (kullanıcı girişi + admin)
+
+Kullanıcı hesapları, e-posta onay kodu, kişiye özel preset'ler ve admin paneli
+eklendi. Bunlar için PostgreSQL ve birkaç ortam değişkeni gerekir. Ayrıntılı
+kurulum: **[SETUP-HESAP.md](SETUP-HESAP.md)**.
+
+| Değişken         | Açıklama                                              |
+|------------------|------------------------------------------------------|
+| `DATABASE_URL`   | PostgreSQL bağlantı dizesi (Railway otomatik sağlar) |
+| `DATABASE_SSL`   | Public Postgres için `true`                          |
+| `JWT_SECRET`     | Oturum imzalama anahtarı (uzun, rastgele)            |
+| `RESEND_API_KEY` | Resend e-posta API anahtarı                          |
+| `MAIL_FROM`      | Gönderen adresi (örn. `MoS Rhythm <onboarding@resend.dev>`) |
+| `ADMIN_EMAIL`    | Bu e-posta ile doğrulanan kullanıcı otomatik admin olur |
+| `APP_URL`        | Canlı URL (e-posta metinleri için)                   |
+
+Yeni sunucu bağımlılıkları: `express`, `pg`, `bcryptjs`, `jsonwebtoken`,
+`cookie-parser`, `resend`, `dotenv`.

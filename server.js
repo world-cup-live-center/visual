@@ -1,9 +1,19 @@
+require("dotenv").config();
+
 const http = require("http");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const crypto = require("crypto");
 const { spawn } = require("child_process");
+
+const express = require("express");
+const cookieParser = require("cookie-parser");
+
+const db = require("./db");
+const authModule = require("./lib/auth");
+const presetsModule = require("./lib/presets");
+const adminModule = require("./lib/admin");
 
 // ffmpeg, gorunur CPU sayisi kadar thread acar. Railway gibi cok-cekirdek goren
 // ama RAM'i kisitli konteynerlerde bu, ProRes encode sirasinda bellegi tasirip
@@ -26,8 +36,22 @@ const contentTypes = {
   ".mp4": "video/mp4",
   ".png": "image/png",
   ".svg": "image/svg+xml",
-  ".webm": "video/webm"
+  ".webm": "video/webm",
+  ".ico": "image/x-icon",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2"
 };
+
+// Statik olarak ASLA sunulmayacak dosyalar (kaynak/sirlar). lib/ ve node_modules/
+// klasorleri ile nokta ile baslayan dosyalar (.env, .git) ayrica yol kuraliyla engellenir.
+const BLOCKED_FILES = new Set([
+  "server.js",
+  "db.js",
+  "package.json",
+  "package-lock.json",
+  ".env",
+  ".env.example"
+]);
 
 function looksLikeFilePath(candidate) {
   // POSIX mutlak yol, Windows surucu harfi (C:\...) ya da icinde ayrac olan her sey.
@@ -41,15 +65,11 @@ function looksLikeFilePath(candidate) {
 function resolveBinary(candidates) {
   for (const candidate of candidates.filter(Boolean)) {
     if (looksLikeFilePath(candidate)) {
-      // Gercek bir dosya yolu adayi: yalnizca dosya gercekten varsa kullan.
-      // (Linux'ta "C:\\ffmpeg\\..." gibi Windows yollari burada elenir; boylece
-      //  "ffmpeg" / "ffprobe" PATH fallback'ine duser.)
       if (fs.existsSync(candidate)) {
         return candidate;
       }
       continue;
     }
-    // Ciplak komut ("ffmpeg"): PATH uzerinden calistirilir.
     return candidate;
   }
   return null;
@@ -94,41 +114,6 @@ const ffprobePath = resolveBinary([
   "ffprobe"
 ]);
 
-function sendJson(response, statusCode, payload) {
-  response.writeHead(statusCode, {
-    "Content-Type": "application/json; charset=utf-8",
-    "Cache-Control": "no-store"
-  });
-  response.end(JSON.stringify(payload));
-}
-
-function serveStaticFile(requestPath, response) {
-  const normalizedPath = requestPath === "/" ? "/index.html" : requestPath;
-  const filePath = path.normalize(path.join(ROOT_DIR, normalizedPath));
-
-  if (!filePath.startsWith(ROOT_DIR)) {
-    sendJson(response, 403, { error: "Yasak yol." });
-    return;
-  }
-
-  fs.readFile(filePath, (error, fileBuffer) => {
-    if (error) {
-      if (error.code === "ENOENT") {
-        sendJson(response, 404, { error: "Dosya bulunamadi." });
-        return;
-      }
-
-      sendJson(response, 500, { error: "Dosya okunamadi." });
-      return;
-    }
-
-    const extension = path.extname(filePath).toLowerCase();
-    const contentType = contentTypes[extension] || "application/octet-stream";
-    response.writeHead(200, { "Content-Type": contentType });
-    response.end(fileBuffer);
-  });
-}
-
 function collectRequestBody(request, maxBytes = MAX_UPLOAD_BYTES) {
   return new Promise((resolve, reject) => {
     const chunks = [];
@@ -136,20 +121,15 @@ function collectRequestBody(request, maxBytes = MAX_UPLOAD_BYTES) {
 
     request.on("data", (chunk) => {
       totalBytes += chunk.length;
-
       if (totalBytes > maxBytes) {
         reject(Object.assign(new Error("Kayit dosyasi cok buyuk."), { code: "PAYLOAD_TOO_LARGE" }));
         request.destroy();
         return;
       }
-
       chunks.push(chunk);
     });
 
-    request.on("end", () => {
-      resolve(Buffer.concat(chunks));
-    });
-
+    request.on("end", () => resolve(Buffer.concat(chunks)));
     request.on("error", reject);
   });
 }
@@ -157,37 +137,20 @@ function collectRequestBody(request, maxBytes = MAX_UPLOAD_BYTES) {
 function runProcess(command, args) {
   console.log("[ffmpeg]", command, args.join(" "));
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
-      windowsHide: true
-    });
-
+    const child = spawn(command, args, { windowsHide: true });
     let stdout = "";
     let stderr = "";
-
-    child.stdout.on("data", (chunk) => {
-      stdout += chunk.toString();
-    });
-
-    child.stderr.on("data", (chunk) => {
-      stderr += chunk.toString();
-    });
-
+    child.stdout.on("data", (chunk) => { stdout += chunk.toString(); });
+    child.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
     child.on("error", reject);
-
     child.on("close", (exitCode) => {
-      if (exitCode === 0) {
-        resolve({ stdout, stderr });
-        return;
-      }
-
+      if (exitCode === 0) { resolve({ stdout, stderr }); return; }
       reject(new Error(stderr.trim() || `${command} basarisiz oldu (${exitCode}).`));
     });
   });
 }
 
 function readCgroupMemoryLimitMB() {
-  // Konteynerin gercek bellek limiti (cgroup v2 veya v1). os.totalmem() host'u gosterir,
-  // konteyner limitini degil; OOM teshisi icin cgroup limiti gerekir.
   const candidates = [
     "/sys/fs/cgroup/memory.max",
     "/sys/fs/cgroup/memory/memory.limit_in_bytes"
@@ -207,11 +170,7 @@ function readCgroupMemoryLimitMB() {
 }
 
 async function probeBinary(bin) {
-  // Binary'yi gercekten calistirip versiyonunu alir. fs.existsSync ciplak
-  // komutlar ("ffmpeg") icin yaniltici oldugundan kesin sonuc icin bunu kullaniriz.
-  if (!bin) {
-    return { ok: false, error: "yol bulunamadi" };
-  }
+  if (!bin) return { ok: false, error: "yol bulunamadi" };
   try {
     const { stdout } = await runProcess(bin, ["-version"]);
     return { ok: true, version: (stdout.split("\n")[0] || "").trim() };
@@ -232,19 +191,10 @@ async function probeVideoAlpha(inputFile) {
   if (!ffprobePath) {
     throw Object.assign(new Error("ffprobe bulunamadi."), { code: "FFPROBE_MISSING" });
   }
-
   const { stdout } = await runProcess(ffprobePath, [
-    "-v",
-    "error",
-    "-select_streams",
-    "v:0",
-    "-show_entries",
-    "stream=pix_fmt",
-    "-of",
-    "json",
-    inputFile
+    "-v", "error", "-select_streams", "v:0",
+    "-show_entries", "stream=pix_fmt", "-of", "json", inputFile
   ]);
-
   const payload = JSON.parse(stdout);
   const pixelFormat = payload?.streams?.[0]?.pix_fmt || "";
   return hasAlphaPixelFormat(pixelFormat);
@@ -258,16 +208,11 @@ function slugify(value) {
 }
 
 async function safeUnlink(filePath) {
-  if (!filePath) {
-    return;
-  }
-
+  if (!filePath) return;
   try {
     await fs.promises.unlink(filePath);
   } catch (error) {
-    if (error.code !== "ENOENT") {
-      console.warn("Gecici dosya silinemedi:", filePath);
-    }
+    if (error.code !== "ENOENT") console.warn("Gecici dosya silinemedi:", filePath);
   }
 }
 
@@ -275,15 +220,12 @@ function unpackDualPassPayload(inputBuffer) {
   if (!Buffer.isBuffer(inputBuffer) || inputBuffer.length < 8) {
     throw Object.assign(new Error("Dual-pass kayit verisi bozuk."), { code: "INVALID_DUAL_PASS" });
   }
-
   const colorLength = inputBuffer.readUInt32BE(0);
   const matteLength = inputBuffer.readUInt32BE(4);
   const expectedLength = 8 + colorLength + matteLength;
-
   if (!colorLength || !matteLength || inputBuffer.length !== expectedLength) {
     throw Object.assign(new Error("Dual-pass kayit uzunlugu gecersiz."), { code: "INVALID_DUAL_PASS" });
   }
-
   return {
     colorBuffer: inputBuffer.subarray(8, 8 + colorLength),
     matteBuffer: inputBuffer.subarray(8 + colorLength, expectedLength)
@@ -330,112 +272,69 @@ async function transcodeRecording(inputBuffer, options = {}) {
       }
 
       const filterComplex = "[1:v]format=gray[alpha];[0:v][alpha]alphamerge[outv]";
-
       await runProcess(ffmpegPath, [
         "-y", "-i", inputFile, "-i", matteFile,
         "-filter_complex", filterComplex,
         "-map", "[outv]", "-map", "0:a?",
         "-threads", FFMPEG_THREADS,
-        "-c:v", "prores_ks",
-        "-profile:v", "4",
-        "-pix_fmt", "yuva444p10le",
-        "-qscale:v", "20",
+        "-c:v", "prores_ks", "-profile:v", "4",
+        "-pix_fmt", "yuva444p10le", "-qscale:v", "20",
         "-c:a", "aac", "-b:a", "256k",
         outputFile
       ]);
 
-      return {
-        outputFile,
-        downloadName: `${baseName}-alpha.mov`,
-        mimeType: "video/quicktime"
-      };
+      return { outputFile, downloadName: `${baseName}-alpha.mov`, mimeType: "video/quicktime" };
     }
 
     if (mode === "transparent") {
       const alphaAvailable = await probeVideoAlpha(inputFile);
-
       if (!alphaAvailable) {
-        throw Object.assign(new Error("Tarayici bu kayitta alpha kanali uretmedi."), {
-          code: "ALPHA_UNAVAILABLE"
-        });
+        throw Object.assign(new Error("Tarayici bu kayitta alpha kanali uretmedi."), { code: "ALPHA_UNAVAILABLE" });
       }
-
       await runProcess(ffmpegPath, [
         "-y", "-i", inputFile,
         "-threads", FFMPEG_THREADS,
-        "-c:v", "prores_ks",
-        "-profile:v", "4",
-        "-pix_fmt", "yuva444p10le",
-        "-qscale:v", "20",
+        "-c:v", "prores_ks", "-profile:v", "4",
+        "-pix_fmt", "yuva444p10le", "-qscale:v", "20",
         "-c:a", "aac", "-b:a", "256k",
         outputFile
       ]);
-
-      return {
-        outputFile,
-        downloadName: `${baseName}-alpha.mov`,
-        mimeType: "video/quicktime"
-      };
+      return { outputFile, downloadName: `${baseName}-alpha.mov`, mimeType: "video/quicktime" };
     }
 
     await runProcess(ffmpegPath, [
-      "-y",
-      "-i",
-      inputFile,
-      "-threads",
-      FFMPEG_THREADS,
-      "-c:v",
-      "libx264",
-      "-preset",
-      "slow",
-      "-crf",
-      "12",
-      "-pix_fmt",
-      "yuv420p",
-      "-c:a",
-      "aac",
-      "-b:a",
-      "320k",
-      "-movflags",
-      "+faststart",
+      "-y", "-i", inputFile,
+      "-threads", FFMPEG_THREADS,
+      "-c:v", "libx264", "-preset", "slow", "-crf", "12",
+      "-pix_fmt", "yuv420p",
+      "-c:a", "aac", "-b:a", "320k",
+      "-movflags", "+faststart",
       outputFile
     ]);
 
-    return {
-      outputFile,
-      downloadName: `${baseName}.mp4`,
-      mimeType: "video/mp4"
-    };
+    return { outputFile, downloadName: `${baseName}.mp4`, mimeType: "video/mp4" };
   } catch (error) {
-    // Hata durumunda yarim kalmis cikti dosyasini da temizle
     await safeUnlink(outputFile);
     throw error;
   } finally {
-    // Girdi/matte gecici dosyalari her durumda silinir; cikti dosyasi
-    // basariliysa caller tarafindan stream edilip sonra silinir.
     await safeUnlink(inputFile);
     await safeUnlink(matteFile);
   }
 }
 
-async function handleTranscode(request, response, requestUrl) {
+async function handleTranscode(request, response) {
   try {
     const inputBuffer = await collectRequestBody(request);
-    const requestMode = requestUrl.searchParams.get("mode");
+    const requestMode = request.query.mode;
     const mode =
       requestMode === "transparent-dual"
         ? "transparent-dual"
         : requestMode === "transparent"
           ? "transparent"
           : "standard";
-    const basename = requestUrl.searchParams.get("basename") || "visualizer";
-    const result = await transcodeRecording(inputBuffer, {
-      mode,
-      basename
-    });
+    const basename = request.query.basename || "visualizer";
+    const result = await transcodeRecording(inputBuffer, { mode, basename });
 
-    // Cikti dosyasini bellege okumadan dogrudan stream et. Boylece
-    // 2 GB+ ProRes ciktilari (uzun kayitlar) fs.readFile sinirina takilmaz.
     const { size } = await fs.promises.stat(result.outputFile);
     response.writeHead(200, {
       "Cache-Control": "no-store",
@@ -460,78 +359,120 @@ async function handleTranscode(request, response, requestUrl) {
     });
     fileStream.on("close", cleanupOutput);
     response.on("close", () => fileStream.destroy());
-
     fileStream.pipe(response);
-    return;
   } catch (error) {
-    if (error.code === "PAYLOAD_TOO_LARGE") {
-      sendJson(response, 413, {
-        code: error.code,
-        error: error.message
+    const status =
+      error.code === "PAYLOAD_TOO_LARGE" ? 413 :
+      error.code === "ALPHA_UNAVAILABLE" ? 422 :
+      error.code === "INVALID_DUAL_PASS" ? 400 : 500;
+    if (!response.headersSent) {
+      response.status(status).json({
+        code: error.code || "TRANSCODE_FAILED",
+        error: error.message || "Transcode sirasinda hata olustu."
       });
-      return;
     }
-
-    if (error.code === "ALPHA_UNAVAILABLE") {
-      sendJson(response, 422, {
-        code: error.code,
-        error: error.message
-      });
-      return;
-    }
-
-    if (error.code === "INVALID_DUAL_PASS") {
-      sendJson(response, 400, {
-        code: error.code,
-        error: error.message
-      });
-      return;
-    }
-
-    sendJson(response, 500, {
-      code: error.code || "TRANSCODE_FAILED",
-      error: error.message || "Transcode sirasinda hata olustu."
-    });
   }
 }
 
-const server = http.createServer((request, response) => {
-  const requestUrl = new URL(request.url, `http://${request.headers.host || "localhost"}`);
+// --- Guvenli statik dosya sunumu (whitelist) ---
+function serveStaticFile(req, res) {
+  let pathname;
+  try {
+    pathname = decodeURIComponent(req.path);
+  } catch {
+    return res.status(400).json({ error: "Gecersiz yol." });
+  }
+  if (pathname === "/") pathname = "/index.html";
 
-  if (request.method === "GET" && requestUrl.pathname === "/api/debug") {
-    Promise.all([probeBinary(ffmpegPath), probeBinary(ffprobePath)])
-      .then(([ffmpeg, ffprobe]) => {
-        sendJson(response, 200, {
-          platform: process.platform,
-          ffmpegPath,
-          ffprobePath,
-          ffmpeg,
-          ffprobe,
-          ready: ffmpeg.ok && ffprobe.ok,
-          ffmpegThreads: FFMPEG_THREADS,
-          cpus: os.cpus().length,
-          memoryLimitMB: readCgroupMemoryLimitMB(),
-          hostTotalMB: Math.round(os.totalmem() / 1048576)
-        });
-      })
-      .catch((error) => {
-        sendJson(response, 500, { error: error.message });
-      });
-    return;
+  // Nokta ile baslayan segment (.env, .git) veya sunucu klasorleri engellenir.
+  if (/(^|\/)\.[^/]/.test(pathname) || /(^|\/)(lib|node_modules)(\/|$)/.test(pathname)) {
+    return res.status(404).json({ error: "Bulunamadi." });
   }
 
-  if (request.method === "POST" && requestUrl.pathname === "/api/transcode") {
-    handleTranscode(request, response, requestUrl);
-    return;
+  const filePath = path.normalize(path.join(ROOT_DIR, pathname));
+  if (!filePath.startsWith(ROOT_DIR)) {
+    return res.status(403).json({ error: "Yasak yol." });
+  }
+  if (BLOCKED_FILES.has(path.basename(filePath))) {
+    return res.status(404).json({ error: "Bulunamadi." });
+  }
+  const extension = path.extname(filePath).toLowerCase();
+  const contentType = contentTypes[extension];
+  if (!contentType) {
+    return res.status(404).json({ error: "Bulunamadi." });
   }
 
-  if (request.method !== "GET" && request.method !== "HEAD") {
-    sendJson(response, 405, { error: "Desteklenmeyen istek." });
-    return;
-  }
+  fs.readFile(filePath, (error, fileBuffer) => {
+    if (error) {
+      const code = error.code === "ENOENT" ? 404 : 500;
+      return res.status(code).json({ error: code === 404 ? "Dosya bulunamadi." : "Dosya okunamadi." });
+    }
+    res.writeHead(200, { "Content-Type": contentType });
+    res.end(fileBuffer);
+  });
+}
 
-  serveStaticFile(requestUrl.pathname, response);
+// --- Express uygulamasi ---
+const app = express();
+app.disable("x-powered-by");
+app.use(cookieParser());
+
+// /api altindaki tum isteklerde oturum kullanicisini cikar.
+app.use("/api", authModule.attachUser);
+
+// Kimlik / preset / admin rotalari (JSON govde).
+const jsonParser = express.json({ limit: "1mb" });
+app.use("/api/auth", jsonParser, authModule.router);
+app.use("/api/presets", jsonParser, presetsModule.router);
+app.use("/api/admin", jsonParser, adminModule.router);
+
+// Bozuk JSON govdesi icin temiz hata.
+app.use("/api", (err, req, res, next) => {
+  if (err && err.type === "entity.parse.failed") {
+    return res.status(400).json({ error: "Gecersiz istek govdesi." });
+  }
+  next(err);
 });
+
+// Video export — giris zorunlu (misafir export yapamaz). Ham govde stream edilir.
+app.post("/api/transcode", authModule.requireAuth, handleTranscode);
+
+app.get("/api/debug", (req, res) => {
+  Promise.all([probeBinary(ffmpegPath), probeBinary(ffprobePath)])
+    .then(([ffmpeg, ffprobe]) => {
+      res.json({
+        platform: process.platform,
+        ffmpegPath, ffprobePath, ffmpeg, ffprobe,
+        ready: ffmpeg.ok && ffprobe.ok,
+        ffmpegThreads: FFMPEG_THREADS,
+        cpus: os.cpus().length,
+        memoryLimitMB: readCgroupMemoryLimitMB(),
+        hostTotalMB: Math.round(os.totalmem() / 1048576),
+        dbConfigured: db.isConfigured(),
+        dbReady: db.isReady()
+      });
+    })
+    .catch((error) => res.status(500).json({ error: error.message }));
+});
+
+// Statik dosyalar (GET/HEAD). Diger her sey icin catch-all.
+app.use((req, res) => {
+  if (req.path.startsWith("/api/")) {
+    return res.status(404).json({ error: "Bulunamadi." });
+  }
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    return res.status(405).json({ error: "Desteklenmeyen istek." });
+  }
+  serveStaticFile(req, res);
+});
+
+// Genel hata yakalayici.
+app.use((err, req, res, next) => {
+  console.error("[express]", err.message);
+  if (!res.headersSent) res.status(500).json({ error: "Sunucu hatasi." });
+});
+
+const server = http.createServer(app);
 
 function listenWithFallback(startPort, attemptsLeft) {
   server
@@ -540,7 +481,6 @@ function listenWithFallback(startPort, attemptsLeft) {
         listenWithFallback(startPort + 1, attemptsLeft - 1);
         return;
       }
-
       console.error("Sunucu baslatilamadi:", error.message);
       process.exit(1);
     })
@@ -563,12 +503,17 @@ function handleShutdown() {
 process.on("SIGINT", handleShutdown);
 process.on("SIGTERM", handleShutdown);
 
-if (require.main === module) {
+async function start() {
+  try {
+    await db.initSchema();
+  } catch (error) {
+    console.error("[db] sema kurulamadi:", error.message);
+  }
   listenWithFallback(DEFAULT_PORT, MAX_PORT_ATTEMPTS);
 }
 
-module.exports = {
-  listenWithFallback,
-  server,
-  transcodeRecording
-};
+if (require.main === module) {
+  start();
+}
+
+module.exports = { app, server, listenWithFallback, transcodeRecording };

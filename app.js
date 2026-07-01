@@ -363,6 +363,8 @@ function initialize() {
   bindEvents();
   resizeCanvasToDisplaySize();
   renderPresetList();
+  // Oturum degisince (giris/cikis) preset'leri sunucudan tazele.
+  document.addEventListener("mos-auth-change", reloadPresetsFromServer);
   checkServerAvailability();
   setStatus("idle", "Baslamak icin bir muzik dosyasi sec veya surukleyip birak.");
   requestAnimationFrame(renderFrame);
@@ -999,7 +1001,18 @@ async function togglePlayback() {
   dom.audioPlayer.pause();
 }
 
+// Premium eylem guard'i: misafirse giris modalini acar ve eylemi durdurur.
+function requirePremium() {
+  if (window.MosAuth && !window.MosAuth.isAuthed()) {
+    window.MosAuth.requireAuth();
+    setStatus("idle", "Bu ozellik icin ucretsiz giris/kayit gerekli.");
+    return false;
+  }
+  return true;
+}
+
 async function toggleRecording() {
+  if (!requirePremium()) return;
   if (state.isFinalizingRecording) {
     setStatus("paused", "Onceki kayit isleniyor. Bir kac saniye bekleyip tekrar dene.");
     return;
@@ -3089,6 +3102,7 @@ function toggleLoop() {
 
 // ── Snapshot ─────────────────────────────────────────────────────────────────
 function takeSnapshot() {
+  if (!requirePremium()) return;
   dom.canvas.toBlob((blob) => {
     if (!blob) {
       return;
@@ -3104,6 +3118,7 @@ function takeSnapshot() {
 
 // ── Mikrofon ─────────────────────────────────────────────────────────────────
 async function toggleMic() {
+  if (!state.micActive && !requirePremium()) return;
   if (state.micActive) {
     deactivateMic();
   } else {
@@ -3224,7 +3239,25 @@ function syncCustomPaletteVisibility() {
 }
 
 // ── Presetler ────────────────────────────────────────────────────────────────
-const PRESETS_KEY = "rhythmForge_presets";
+// Preset'ler artik sunucuda, kullaniciya ozel saklanir. presetCache bellekteki kopyadir;
+// oturum acilinca /api/presets'ten yuklenir, misafirde bostur.
+let presetCache = {};
+
+async function reloadPresetsFromServer() {
+  if (!window.MosAuth || !window.MosAuth.isAuthed()) {
+    presetCache = {};
+    renderPresetList();
+    return;
+  }
+  try {
+    const res = await fetch("/api/presets", { credentials: "same-origin" });
+    const data = await res.json();
+    presetCache = data.presets || {};
+  } catch {
+    presetCache = {};
+  }
+  renderPresetList();
+}
 
 function capturePresetData() {
   return {
@@ -3247,30 +3280,44 @@ function capturePresetData() {
   };
 }
 
-function savePreset(name) {
-  if (!name.trim()) {
-    return;
-  }
+async function savePreset(name) {
+  if (!requirePremium()) return;
+  const trimmed = name.trim();
+  if (!trimmed) return;
 
-  const presets = loadPresetsFromStorage();
-  presets[name.trim()] = capturePresetData();
-  localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
+  const data = capturePresetData();
+  presetCache[trimmed] = data; // iyimser guncelleme
   renderPresetList();
-}
-
-function loadPresetsFromStorage() {
   try {
-    return JSON.parse(localStorage.getItem(PRESETS_KEY) || "{}");
+    const res = await fetch("/api/presets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ name: trimmed, data })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      setStatus("error", err.error || "Preset kaydedilemedi.");
+    } else {
+      setStatus("idle", `"${trimmed}" preset'i kaydedildi.`);
+    }
   } catch {
-    return {};
+    setStatus("error", "Preset kaydedilemedi — baglantiyi kontrol et.");
   }
+  reloadPresetsFromServer();
 }
 
-function deletePreset(name) {
-  const presets = loadPresetsFromStorage();
-  delete presets[name];
-  localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
+async function deletePreset(name) {
+  if (!requirePremium()) return;
+  delete presetCache[name];
   renderPresetList();
+  try {
+    await fetch(`/api/presets/${encodeURIComponent(name)}`, {
+      method: "DELETE",
+      credentials: "same-origin"
+    });
+  } catch {}
+  reloadPresetsFromServer();
 }
 
 function applyPreset(data) {
@@ -3327,8 +3374,7 @@ function renderPresetList() {
     return;
   }
 
-  const presets = loadPresetsFromStorage();
-  const names = Object.keys(presets);
+  const names = Object.keys(presetCache);
 
   if (names.length === 0) {
     dom.presetList.innerHTML = '<p class="text-xs text-muted text-center py-2">Henuz preset yok.</p>';
@@ -3348,7 +3394,7 @@ function renderPresetList() {
 
   dom.presetList.querySelectorAll("[data-preset-load]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const presetData = loadPresetsFromStorage()[btn.dataset.presetLoad];
+      const presetData = presetCache[btn.dataset.presetLoad];
       if (presetData) {
         applyPreset(presetData);
       }
@@ -4099,6 +4145,7 @@ function drawAlbumArt(metrics) {
 
 // ── Quick Clip (5 saniyelik video) ───────────────────────────────────────────
 async function exportQuickClip() {
+  if (!requirePremium()) return;
   if (state.recording || state.isFinalizingRecording) {
     setStatus("error", "Kayit devam ediyor, once onu bitir.");
     return;

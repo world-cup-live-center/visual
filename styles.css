@@ -301,3 +301,35 @@ details[open] > summary .step-sub {
   background: rgba(255, 255, 255, 0.03);
   border-radius: 999px;
 }
+
+/* ─── Kimlik dogrulama / misafir kilitleme ───────────────────────────── */
+.auth-tab {
+  color: #9a9aa5;
+  cursor: pointer;
+}
+.auth-tab-active {
+  background: rgba(232, 23, 42, 0.16);
+  color: #ffffff;
+}
+.auth-view.flex {
+  display: flex;
+}
+
+/* Kilitli adim bolumleri */
+.is-guest details[data-lock].locked > summary {
+  opacity: 0.7;
+}
+.is-guest details[data-lock].locked > summary .step-sub::after {
+  content: " · 🔒 giriş gerekli";
+  color: #ff6b76;
+  font-weight: 600;
+}
+/* Kilitli butonlar (kayit / snapshot / klip) */
+.is-guest .btn.locked {
+  opacity: 0.65;
+}
+.is-guest .btn.locked::after {
+  content: "🔒";
+  margin-left: 0.4rem;
+  font-size: 0.85em;
+}

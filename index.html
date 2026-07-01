@@ -133,7 +133,7 @@
           <!-- ana eylem grubu: oynat + kayit + indir yan yana -->
           <div class="flex shrink-0 items-center gap-2">
             <button id="play-toggle" class="btn btn-primary min-w-[6.5rem]" type="button">Oynat</button>
-            <button id="record-toggle" class="btn" type="button">Kaydi Baslat</button>
+            <button id="record-toggle" class="btn" type="button" data-lock>Kaydi Baslat</button>
             <a
               id="download-link"
               class="btn border-white/25 bg-white/8 no-underline hover:bg-white/15"
@@ -141,8 +141,8 @@
               hidden
             >Indir</a>
             <button id="loop-toggle" class="btn" type="button" title="Döngü (L)">Döngü</button>
-            <button id="snapshot-btn" class="btn" type="button" title="PNG Snapshot (S)">Snapshot</button>
-            <button id="quickclip-btn" class="btn" type="button" title="5 saniyelik video klip (C)">Klip</button>
+            <button id="snapshot-btn" class="btn" type="button" title="PNG Snapshot (S)" data-lock>Snapshot</button>
+            <button id="quickclip-btn" class="btn" type="button" title="5 saniyelik video klip (C)" data-lock>Klip</button>
           </div>
 
           <span id="time-value" class="shrink-0 text-sm tabular-nums text-muted">00:00 / 00:00</span>
@@ -202,7 +202,15 @@
             <a href="user-manual.html" target="_blank" title="Kullanım Kılavuzu" class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-muted transition hover:border-accent/40 hover:text-cream">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </a>
-            <span class="chip border-accent/40 text-accent">Visualizer</span>
+            <!-- Hesap: misafirken 'Giris', girisliyken ad+menu -->
+            <div id="account-widget" class="relative">
+              <button id="account-btn" type="button" class="chip border-accent/40 text-accent transition hover:bg-accent/10">Giriş / Kayıt</button>
+              <div id="account-menu" class="absolute right-0 top-full z-30 mt-2 hidden w-48 rounded-xl border border-white/10 bg-[#0c0708] p-1.5 shadow-xl">
+                <div class="px-2.5 py-1.5 text-xs text-muted" id="account-email"></div>
+                <a href="admin.html" id="account-admin-link" class="hidden rounded-lg px-2.5 py-2 text-sm text-cream no-underline transition hover:bg-white/5">Admin paneli</a>
+                <button id="account-logout" type="button" class="w-full rounded-lg px-2.5 py-2 text-left text-sm text-cream transition hover:bg-white/5">Çıkış yap</button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -260,7 +268,7 @@
           </details>
 
           <!-- 2. STIL -->
-          <details class="rounded-2xl border border-white/10 bg-white/[0.02]">
+          <details class="rounded-2xl border border-white/10 bg-white/[0.02]" data-lock>
             <summary class="flex items-center gap-3 px-3 py-3 text-muted">
               <span class="step-num">2</span>
               <span class="flex-1">
@@ -368,7 +376,7 @@
           </details>
 
           <!-- 3. ANALIZ -->
-          <details class="rounded-2xl border border-white/10 bg-white/[0.02]">
+          <details class="rounded-2xl border border-white/10 bg-white/[0.02]" data-lock>
             <summary class="flex items-center gap-3 px-3 py-3 text-muted">
               <span class="step-num">3</span>
               <span class="flex-1">
@@ -411,7 +419,7 @@
           </details>
 
           <!-- 4. INCE AYAR -->
-          <details class="rounded-2xl border border-white/10 bg-white/[0.02]">
+          <details class="rounded-2xl border border-white/10 bg-white/[0.02]" data-lock>
             <summary class="flex items-center gap-3 px-3 py-3 text-muted">
               <span class="step-num">4</span>
               <span class="flex-1">
@@ -466,7 +474,7 @@
           </details>
 
           <!-- 5. ALBUM BILGILERI -->
-          <details class="rounded-2xl border border-white/10 bg-white/[0.02]">
+          <details class="rounded-2xl border border-white/10 bg-white/[0.02]" data-lock>
             <summary class="flex items-center gap-3 px-3 py-3 text-muted">
               <span class="step-num">5</span>
               <span class="flex-1">
@@ -531,7 +539,7 @@
           </details>
 
           <!-- 6. ALBUM KAPAGI -->
-          <details class="rounded-2xl border border-white/10 bg-white/[0.02]">
+          <details class="rounded-2xl border border-white/10 bg-white/[0.02]" data-lock>
             <summary class="flex items-center gap-3 px-3 py-3 text-muted">
               <span class="step-num">6</span>
               <span class="flex-1">
@@ -629,7 +637,7 @@
           </details>
 
           <!-- 7. PRESETLER -->
-          <details class="rounded-2xl border border-white/10 bg-white/[0.02]">
+          <details class="rounded-2xl border border-white/10 bg-white/[0.02]" data-lock>
             <summary class="flex items-center gap-3 px-3 py-3 text-muted">
               <span class="step-num">&#9733;</span>
               <span class="flex-1">
@@ -651,7 +659,7 @@
           </details>
 
           <!-- 8. CIKTI -->
-          <details class="rounded-2xl border border-white/10 bg-white/[0.02]">
+          <details class="rounded-2xl border border-white/10 bg-white/[0.02]" data-lock>
             <summary class="flex items-center gap-3 px-3 py-3 text-muted">
               <span class="step-num">7</span>
               <span class="flex-1">
@@ -899,6 +907,71 @@
       })();
     </script>
 
+    <!-- ============ GIRIS / KAYIT MODALI ============ -->
+    <div id="auth-overlay" class="fixed inset-0 z-[120] hidden items-center justify-center bg-black/85 p-4 backdrop-blur-sm" aria-hidden="true">
+      <div id="auth-modal" class="relative w-[min(26rem,calc(100%-1rem))] max-h-[92vh] overflow-y-auto rounded-3xl border border-white/10 bg-gradient-to-b from-[#0c0405] to-[#070000] p-6 shadow-[0_0_60px_rgba(232,23,42,0.25)]" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+        <button id="auth-close" type="button" class="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-muted transition hover:border-accent/40 hover:text-cream" aria-label="Kapat">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+
+        <div class="mb-5 text-center">
+          <span class="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-mint">MoS Rhythm</span>
+          <h2 id="auth-title" class="mt-1 font-display text-2xl font-bold">Hesabına giriş yap</h2>
+          <p id="auth-subtitle" class="mt-1.5 text-sm leading-relaxed text-muted">Tüm özellikleri açmak için giriş yap veya ücretsiz kayıt ol.</p>
+        </div>
+
+        <!-- Sekmeler -->
+        <div id="auth-tabs" class="mb-5 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1">
+          <button type="button" data-auth-tab="login" class="auth-tab rounded-lg px-3 py-2 text-sm font-semibold transition">Giriş</button>
+          <button type="button" data-auth-tab="register" class="auth-tab rounded-lg px-3 py-2 text-sm font-semibold transition">Kayıt ol</button>
+        </div>
+
+        <!-- GIRIS -->
+        <form id="auth-view-login" class="auth-view flex flex-col gap-3" autocomplete="on">
+          <div>
+            <label class="field-label" for="login-email">E-posta</label>
+            <input id="login-email" type="email" class="ctl !pr-3.5" placeholder="ornek@mail.com" autocomplete="email" required />
+          </div>
+          <div>
+            <label class="field-label" for="login-password">Şifre</label>
+            <input id="login-password" type="password" class="ctl !pr-3.5" placeholder="••••••••" autocomplete="current-password" required />
+          </div>
+          <p class="auth-error hidden rounded-lg border border-accent/30 bg-accent/10 px-3 py-2 text-xs text-accent"></p>
+          <button type="submit" class="btn btn-primary mt-1 w-full">Giriş yap</button>
+        </form>
+
+        <!-- KAYIT -->
+        <form id="auth-view-register" class="auth-view hidden flex-col gap-3" autocomplete="on">
+          <div>
+            <label class="field-label" for="reg-name">Ad</label>
+            <input id="reg-name" type="text" class="ctl !pr-3.5" placeholder="Adın" autocomplete="name" required />
+          </div>
+          <div>
+            <label class="field-label" for="reg-email">E-posta</label>
+            <input id="reg-email" type="email" class="ctl !pr-3.5" placeholder="ornek@mail.com" autocomplete="email" required />
+          </div>
+          <div>
+            <label class="field-label" for="reg-password">Şifre (en az 8 karakter)</label>
+            <input id="reg-password" type="password" class="ctl !pr-3.5" placeholder="••••••••" autocomplete="new-password" required />
+          </div>
+          <p class="auth-error hidden rounded-lg border border-accent/30 bg-accent/10 px-3 py-2 text-xs text-accent"></p>
+          <button type="submit" class="btn btn-primary mt-1 w-full">Kayıt ol ve kod gönder</button>
+        </form>
+
+        <!-- KOD DOGRULAMA -->
+        <form id="auth-view-verify" class="auth-view hidden flex-col gap-3">
+          <p class="text-sm leading-relaxed text-muted">
+            <strong id="verify-email-label" class="text-cream"></strong> adresine 6 haneli bir kod gönderdik. Kodu gir:
+          </p>
+          <input id="verify-code" type="text" inputmode="numeric" maxlength="6" class="ctl !pr-3.5 text-center text-2xl tracking-[0.5em]" placeholder="______" />
+          <p class="auth-error hidden rounded-lg border border-accent/30 bg-accent/10 px-3 py-2 text-xs text-accent"></p>
+          <button type="submit" class="btn btn-primary w-full">Doğrula ve giriş yap</button>
+          <button type="button" id="verify-resend" class="text-xs text-muted underline transition hover:text-cream">Kod gelmedi mi? Tekrar gönder</button>
+        </form>
+      </div>
+    </div>
+
     <script src="app.js"></script>
+    <script src="auth-ui.js"></script>
   </body>
 </html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="tr" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>MoS Rhythm | Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: { extend: { colors: {
+          accent: "#e8172a", accent2: "#b5101d", mint: "#ff4d60",
+          muted: "#7a7a7a", cream: "#ffffff", ink: "#050505"
+        }, fontFamily: { display: ["Constantia","Georgia","serif"], body: ["Bahnschrift",'"Trebuchet MS"',"Aptos","sans-serif"] } } }
+      };
+    </script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="min-h-screen bg-ink font-body text-cream antialiased">
+    <div class="page-noise"></div>
+
+    <header class="border-b border-white/10 bg-black/60 backdrop-blur">
+      <div class="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
+        <div class="flex items-center gap-3">
+          <span class="chip border-accent/40 text-accent">Admin</span>
+          <h1 class="font-display text-xl">MoS Rhythm Yönetim</h1>
+        </div>
+        <a href="index.html" class="btn">← Uygulamaya dön</a>
+      </div>
+    </header>
+
+    <!-- Erisim yok -->
+    <div id="gate" class="mx-auto max-w-md px-5 py-24 text-center">
+      <p class="text-muted">Yükleniyor…</p>
+    </div>
+
+    <!-- Panel -->
+    <main id="panel" class="mx-auto hidden max-w-6xl px-5 py-8">
+      <!-- Istatistikler -->
+      <section id="stats" class="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <div class="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <div class="text-2xl font-bold" id="stat-total">–</div>
+          <div class="text-xs text-muted">Toplam kullanıcı</div>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <div class="text-2xl font-bold" id="stat-verified">–</div>
+          <div class="text-xs text-muted">Doğrulanmış</div>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <div class="text-2xl font-bold" id="stat-banned">–</div>
+          <div class="text-xs text-muted">Askıya alınmış</div>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <div class="text-2xl font-bold" id="stat-last7">–</div>
+          <div class="text-xs text-muted">Son 7 gün</div>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <div class="text-2xl font-bold" id="stat-presets">–</div>
+          <div class="text-xs text-muted">Toplam preset</div>
+        </div>
+      </section>
+
+      <div class="mb-3 flex items-center justify-between">
+        <h2 class="font-display text-lg">Kullanıcılar</h2>
+        <input id="search" type="text" placeholder="E-posta/ad ara…" class="ctl !w-64 !pr-3.5" />
+      </div>
+
+      <div class="overflow-x-auto rounded-xl border border-white/10">
+        <table class="w-full min-w-[820px] text-sm">
+          <thead class="bg-white/[0.03] text-left text-xs uppercase tracking-wider text-muted">
+            <tr>
+              <th class="px-3 py-2.5">E-posta</th>
+              <th class="px-3 py-2.5">Ad</th>
+              <th class="px-3 py-2.5">Durum</th>
+              <th class="px-3 py-2.5">Preset</th>
+              <th class="px-3 py-2.5">Kayıt</th>
+              <th class="px-3 py-2.5">Son giriş</th>
+              <th class="px-3 py-2.5 text-right">İşlemler</th>
+            </tr>
+          </thead>
+          <tbody id="users-body"></tbody>
+        </table>
+      </div>
+      <p id="empty" class="hidden py-8 text-center text-muted">Kullanıcı yok.</p>
+    </main>
+
+    <!-- Preset modal -->
+    <div id="preset-overlay" class="fixed inset-0 z-[120] hidden items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
+      <div class="relative w-[min(40rem,calc(100%-1rem))] max-h-[85vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#0c0708] p-6">
+        <button id="preset-close" class="absolute right-4 top-4 icon-btn" aria-label="Kapat">✕</button>
+        <h3 class="mb-4 font-display text-lg" id="preset-title">Preset'ler</h3>
+        <pre id="preset-content" class="whitespace-pre-wrap rounded-lg bg-black/50 p-4 text-xs text-mint"></pre>
+      </div>
+    </div>
+
+    <script src="admin-ui.js"></script>
+  </body>
+</html>

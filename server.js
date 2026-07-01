@@ -283,6 +283,7 @@ async function transcodeRecording(inputBuffer, options = {}) {
         : "standard";
   const baseName = slugify(options.basename || "visualizer");
   const wm = options.watermark ? watermarkFilter() : null; // kota dolduysa filigran
+  const fps = String(Math.max(24, Math.min(60, Number(options.fps) || 30))); // CFR hedef kare hizi
   const token = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
   const inputFile = path.join(TEMP_EXPORT_DIR, `${token}.webm`);
   const matteFile = mode === "transparent-dual" ? path.join(TEMP_EXPORT_DIR, `${token}-matte.webm`) : null;
@@ -316,6 +317,7 @@ async function transcodeRecording(inputBuffer, options = {}) {
         "-filter_complex", filterComplex,
         "-map", "[outv]", "-map", "0:a?",
         "-threads", FFMPEG_THREADS,
+        "-r", fps, "-fps_mode", "cfr",
         "-c:v", "prores_ks", "-profile:v", "4",
         "-pix_fmt", "yuva444p10le", "-qscale:v", "20",
         "-c:a", "aac", "-b:a", "256k",
@@ -333,6 +335,7 @@ async function transcodeRecording(inputBuffer, options = {}) {
       const alphaArgs = ["-y", "-i", inputFile, "-threads", FFMPEG_THREADS];
       if (wm) alphaArgs.push("-vf", wm);
       alphaArgs.push(
+        "-r", fps, "-fps_mode", "cfr",
         "-c:v", "prores_ks", "-profile:v", "4",
         "-pix_fmt", "yuva444p10le", "-qscale:v", "20",
         "-c:a", "aac", "-b:a", "256k",
@@ -345,9 +348,10 @@ async function transcodeRecording(inputBuffer, options = {}) {
     const mp4Args = ["-y", "-i", inputFile, "-threads", FFMPEG_THREADS];
     if (wm) mp4Args.push("-vf", wm);
     mp4Args.push(
-      "-c:v", "libx264", "-preset", "slow", "-crf", "12",
+      "-r", fps, "-fps_mode", "cfr",
+      "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
       "-pix_fmt", "yuv420p",
-      "-c:a", "aac", "-b:a", "320k",
+      "-c:a", "aac", "-b:a", "256k",
       "-movflags", "+faststart",
       outputFile
     );
@@ -374,6 +378,7 @@ async function handleTranscode(request, response) {
           ? "transparent"
           : "standard";
     const basename = request.query.basename || "visualizer";
+    const fps = Math.max(24, Math.min(60, Number(request.query.fps) || 30));
 
     // Kota: dolduysa filigran bas, dolmadiysa temiz uret + sayaci artir.
     let quotaStatus = null;
@@ -385,7 +390,7 @@ async function handleTranscode(request, response) {
       console.warn("[transcode] kota okunamadi:", quotaError.message);
     }
 
-    const result = await transcodeRecording(inputBuffer, { mode, basename, watermark });
+    const result = await transcodeRecording(inputBuffer, { mode, basename, watermark, fps });
 
     if (!watermark && quotaStatus) {
       quota.incrementUsage(request.authUser.id, quotaStatus.periodStart)
@@ -511,7 +516,9 @@ app.get("/api/debug", (req, res) => {
         memoryLimitMB: readCgroupMemoryLimitMB(),
         hostTotalMB: Math.round(os.totalmem() / 1048576),
         dbConfigured: db.isConfigured(),
-        dbReady: db.isReady()
+        dbReady: db.isReady(),
+        watermarkFont: WATERMARK_FONT,
+        watermarkText: WATERMARK_TEXT
       });
     })
     .catch((error) => res.status(500).json({ error: error.message }));

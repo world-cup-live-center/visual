@@ -2688,6 +2688,7 @@ async function requestTranscodedRecording(
 ) {
   const searchParams = new URLSearchParams({
     basename: buildRecordingBaseName(recordingProfile),
+    fps: String(recordingProfile.exportFps || 30),
     mode:
       recordingProfile.exportBackground === "transparent" && matteBlob
         ? "transparent-dual"

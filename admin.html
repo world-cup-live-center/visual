@@ -15,6 +15,14 @@
       };
     </script>
     <link rel="stylesheet" href="styles.css" />
+    <style type="text/tailwindcss">
+      .btn { @apply inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-cream transition duration-200 hover:border-accent/40 hover:bg-accent/10 focus-visible:border-accent/40 focus-visible:outline-none cursor-pointer; }
+      .btn-primary { @apply border-transparent bg-gradient-to-br from-accent to-accent2 font-bold text-white hover:from-[#ff1a2e] hover:to-accent; }
+      .icon-btn { @apply inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-cream transition hover:border-accent/50 hover:bg-accent/10 focus-visible:border-accent/50 focus-visible:outline-none cursor-pointer; }
+      .ctl { @apply w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-cream transition hover:border-accent/40 focus-visible:border-accent/40 focus-visible:outline-none; }
+      .field-label { @apply mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted; }
+      .chip { @apply rounded-full border border-white/10 bg-black/45 px-3 py-1 text-xs text-cream; }
+    </style>
   </head>
   <body class="min-h-screen bg-ink font-body text-cream antialiased">
     <div class="page-noise"></div>
@@ -60,6 +68,30 @@
         </div>
       </section>
 
+      <!-- Paketler -->
+      <section class="mb-10">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="font-display text-lg">Paketler</h2>
+          <button id="plan-new" class="btn btn-primary !px-3 !py-1.5 text-sm">+ Yeni paket</button>
+        </div>
+        <div class="overflow-x-auto rounded-xl border border-white/10">
+          <table class="w-full min-w-[720px] text-sm">
+            <thead class="bg-white/[0.03] text-left text-xs uppercase tracking-wider text-muted">
+              <tr>
+                <th class="px-3 py-2.5">Paket</th>
+                <th class="px-3 py-2.5">Kota/ay</th>
+                <th class="px-3 py-2.5">Aylık</th>
+                <th class="px-3 py-2.5">Yıllık</th>
+                <th class="px-3 py-2.5">Durum</th>
+                <th class="px-3 py-2.5">Abone</th>
+                <th class="px-3 py-2.5 text-right">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody id="plans-body"></tbody>
+          </table>
+        </div>
+      </section>
+
       <div class="mb-3 flex items-center justify-between">
         <h2 class="font-display text-lg">Kullanıcılar</h2>
         <input id="search" type="text" placeholder="E-posta/ad ara…" class="ctl !w-64 !pr-3.5" />
@@ -72,6 +104,7 @@
               <th class="px-3 py-2.5">E-posta</th>
               <th class="px-3 py-2.5">Ad</th>
               <th class="px-3 py-2.5">Durum</th>
+              <th class="px-3 py-2.5">Plan</th>
               <th class="px-3 py-2.5">Preset</th>
               <th class="px-3 py-2.5">Kayıt</th>
               <th class="px-3 py-2.5">Son giriş</th>
@@ -90,6 +123,49 @@
         <button id="preset-close" class="absolute right-4 top-4 icon-btn" aria-label="Kapat">✕</button>
         <h3 class="mb-4 font-display text-lg" id="preset-title">Preset'ler</h3>
         <pre id="preset-content" class="whitespace-pre-wrap rounded-lg bg-black/50 p-4 text-xs text-mint"></pre>
+      </div>
+    </div>
+
+    <!-- Paket düzenleme modalı -->
+    <div id="plan-overlay" class="fixed inset-0 z-[120] hidden items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
+      <div class="relative w-[min(30rem,calc(100%-1rem))] max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#0c0708] p-6">
+        <button id="plan-close" class="absolute right-4 top-4 icon-btn" aria-label="Kapat">✕</button>
+        <h3 class="mb-4 font-display text-lg" id="plan-modal-title">Paket</h3>
+        <form id="plan-form" class="flex flex-col gap-3">
+          <input type="hidden" id="plan-id" />
+          <div>
+            <label class="field-label" for="plan-name">Ad</label>
+            <input id="plan-name" type="text" class="ctl" placeholder="Başlangıç" required />
+          </div>
+          <div>
+            <label class="field-label" for="plan-desc">Açıklama</label>
+            <input id="plan-desc" type="text" class="ctl" placeholder="Aylık 10 temiz export" />
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="field-label" for="plan-quota">Kota/ay</label>
+              <input id="plan-quota" type="number" min="0" class="ctl" value="5" />
+            </div>
+            <div>
+              <label class="field-label" for="plan-price-m">Aylık ₺</label>
+              <input id="plan-price-m" type="number" min="0" step="0.01" class="ctl" value="0" />
+            </div>
+            <div>
+              <label class="field-label" for="plan-price-y">Yıllık ₺</label>
+              <input id="plan-price-y" type="number" min="0" step="0.01" class="ctl" value="0" />
+            </div>
+          </div>
+          <div>
+            <label class="field-label" for="plan-order">Sıra</label>
+            <input id="plan-order" type="number" min="0" class="ctl !w-24" value="0" />
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="flex items-center gap-2 text-sm"><input id="plan-active" type="checkbox" class="h-4 w-4 accent-accent" checked /> Aktif (kullanıcılara görünür)</label>
+            <label class="flex items-center gap-2 text-sm"><input id="plan-default" type="checkbox" class="h-4 w-4 accent-accent" /> Varsayılan paket (yeni/ödemesi biten üyeler)</label>
+          </div>
+          <p id="plan-error" class="hidden rounded-lg border border-accent/30 bg-accent/10 px-3 py-2 text-xs text-accent"></p>
+          <button type="submit" class="btn btn-primary w-full">Kaydet</button>
+        </form>
       </div>
     </div>
 

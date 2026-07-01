@@ -258,7 +258,8 @@ const dom = {
   albumArtOffsetY: document.querySelector("#album-art-offset-y"),
   albumArtOffsetYValue: document.querySelector("#album-art-offset-y-value"),
   albumArtResetBtn: document.querySelector("#album-art-reset"),
-  quickclipBtn: document.querySelector("#quickclip-btn")
+  quickclipBtn: document.querySelector("#quickclip-btn"),
+  quotaBadge: document.querySelector("#quota-badge")
 };
 
 const context = dom.canvas.getContext("2d");
@@ -368,8 +369,9 @@ function initialize() {
   bindEvents();
   resizeCanvasToDisplaySize();
   renderPresetList();
-  // Oturum degisince (giris/cikis) preset'leri sunucudan tazele.
+  // Oturum degisince (giris/cikis) preset'leri ve kotayi sunucudan tazele.
   document.addEventListener("mos-auth-change", reloadPresetsFromServer);
+  document.addEventListener("mos-auth-change", refreshQuota);
   checkServerAvailability();
   setStatus("idle", "Baslamak icin bir muzik dosyasi sec veya surukleyip birak.");
   requestAnimationFrame(renderFrame);
@@ -2718,9 +2720,12 @@ async function requestTranscodedRecording(
     throw exportError;
   }
 
+  const watermarked = response.headers.get("X-Watermarked") === "1";
   const blob = await response.blob();
+  refreshQuota(); // export sonrasi kalan kotayi guncelle
   return {
     blob,
+    watermarked,
     downloadName:
       response.headers.get("X-Download-Name") ||
       `${buildRecordingBaseName(recordingProfile)}${
@@ -3246,6 +3251,32 @@ function syncCustomPaletteVisibility() {
 // ── Presetler ────────────────────────────────────────────────────────────────
 // Preset'ler artik sunucuda, kullaniciya ozel saklanir. presetCache (yukarida
 // initialize'dan once tanimli) bellekteki kopyadir; oturum acilinca yuklenir.
+// Kota rozeti: bu donem kalan temiz (filigransiz) export sayisi.
+async function refreshQuota() {
+  if (!dom.quotaBadge) return;
+  if (!window.MosAuth || !window.MosAuth.isAuthed()) {
+    dom.quotaBadge.hidden = true;
+    return;
+  }
+  try {
+    const res = await fetch("/api/me/plan", { credentials: "same-origin" });
+    if (!res.ok) { dom.quotaBadge.hidden = true; return; }
+    const d = await res.json();
+    dom.quotaBadge.hidden = false;
+    if (d.remaining > 0) {
+      dom.quotaBadge.textContent = `Temiz export: ${d.remaining}/${d.quota}`;
+      dom.quotaBadge.style.color = "";
+      dom.quotaBadge.style.borderColor = "";
+    } else {
+      dom.quotaBadge.textContent = "Kota doldu · export'lar filigranlı";
+      dom.quotaBadge.style.color = "#ffb4a0";
+      dom.quotaBadge.style.borderColor = "rgba(232,23,42,.45)";
+    }
+  } catch {
+    dom.quotaBadge.hidden = true;
+  }
+}
+
 async function reloadPresetsFromServer() {
   if (!window.MosAuth || !window.MosAuth.isAuthed()) {
     presetCache = {};

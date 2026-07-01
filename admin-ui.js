@@ -3,6 +3,9 @@
   "use strict";
 
   let allUsers = [];
+  let allPlans = [];
+
+  const fmtPrice = (v) => Number(v || 0).toLocaleString("tr-TR") + " ₺";
 
   async function api(path, opts = {}) {
     const res = await fetch(path, {
@@ -47,11 +50,19 @@
     return parts.join(" ");
   }
 
+  function planSelect(u) {
+    const opts = ['<option value="">Varsayılan</option>'].concat(
+      allPlans.map((p) => `<option value="${p.id}" ${String(u.plan_id) === String(p.id) ? "selected" : ""}>${esc(p.name)}</option>`)
+    );
+    return `<select data-planselect class="ctl !w-32 !py-1 !px-2 text-xs">${opts.join("")}</select>`;
+  }
+
   function rowHtml(u) {
     return `<tr class="border-t border-white/5 hover:bg-white/[0.02]" data-id="${u.id}">
       <td class="px-3 py-2.5">${esc(u.email)}</td>
       <td class="px-3 py-2.5">${esc(u.name)}</td>
       <td class="px-3 py-2.5">${statusBadge(u)}</td>
+      <td class="px-3 py-2.5">${planSelect(u)}</td>
       <td class="px-3 py-2.5">
         ${u.preset_count > 0
           ? `<button class="text-mint underline" data-act="presets">${u.preset_count}</button>`
@@ -160,6 +171,110 @@
     if (e.target.id === "preset-overlay") closePresetModal();
   });
 
+  // Kullaniciya plan atama (satirdaki select degisince)
+  document.getElementById("users-body").addEventListener("change", async (e) => {
+    const sel = e.target.closest("[data-planselect]");
+    if (!sel) return;
+    const id = sel.closest("tr").dataset.id;
+    const planId = sel.value ? Number(sel.value) : null;
+    try {
+      await api(`/api/admin/users/${id}/plan`, { method: "PUT", body: { planId } });
+      const u = allUsers.find((x) => String(x.id) === String(id));
+      if (u) u.plan_id = planId;
+    } catch (err) {
+      alert(err.message || "Plan atanamadı.");
+      await loadUsers();
+    }
+  });
+
+  // ── Paketler ──
+  async function loadPlans() {
+    const data = await api("/api/admin/plans");
+    allPlans = data.plans || [];
+    renderPlans();
+  }
+  function planRow(p) {
+    const badge = p.is_default
+      ? ' <span class="rounded px-1.5 py-0.5 text-[0.7rem]" style="background:rgba(255,77,96,.15);color:#ff8a97">Varsayılan</span>'
+      : "";
+    return `<tr class="border-t border-white/5" data-id="${p.id}">
+      <td class="px-3 py-2.5"><div class="font-semibold">${esc(p.name)}${badge}</div><div class="text-xs text-muted">${esc(p.description)}</div></td>
+      <td class="px-3 py-2.5">${p.monthly_quota}</td>
+      <td class="px-3 py-2.5">${fmtPrice(p.price_monthly)}</td>
+      <td class="px-3 py-2.5">${fmtPrice(p.price_yearly)}</td>
+      <td class="px-3 py-2.5">${p.is_active ? '<span style="color:#7ee6a8">Aktif</span>' : '<span class="text-muted">Pasif</span>'}</td>
+      <td class="px-3 py-2.5">${p.subscriber_count}</td>
+      <td class="px-3 py-2.5"><div class="flex justify-end gap-1.5">
+        <button class="btn !px-2.5 !py-1 text-xs" data-pact="edit">Düzenle</button>
+        ${!p.is_default ? '<button class="btn !px-2.5 !py-1 text-xs" data-pact="default">Varsayılan</button>' : ""}
+        ${!p.is_default ? '<button class="btn !px-2.5 !py-1 text-xs" data-pact="delete" style="border-color:rgba(232,23,42,.4)">Sil</button>' : ""}
+      </div></td>
+    </tr>`;
+  }
+  function renderPlans() {
+    document.getElementById("plans-body").innerHTML = allPlans.map(planRow).join("");
+  }
+
+  document.getElementById("plans-body").addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-pact]");
+    if (!btn) return;
+    const id = btn.closest("tr").dataset.id;
+    const act = btn.dataset.pact;
+    const plan = allPlans.find((p) => String(p.id) === String(id));
+    if (act === "edit") { openPlanModal(plan); return; }
+    try {
+      if (act === "default") {
+        await api(`/api/admin/plans/${id}/default`, { method: "POST" });
+      } else if (act === "delete") {
+        if (!confirm(`"${plan.name}" paketi silinsin mi? Bu paketteki üyeler varsayılana düşer.`)) return;
+        await api(`/api/admin/plans/${id}`, { method: "DELETE" });
+      }
+      await loadPlans(); await loadUsers();
+    } catch (err) { alert(err.message || "İşlem başarısız."); }
+  });
+
+  const planOverlay = document.getElementById("plan-overlay");
+  const pv = (id) => document.getElementById(id);
+  function openPlanModal(plan) {
+    pv("plan-error").classList.add("hidden");
+    pv("plan-modal-title").textContent = plan ? "Paketi düzenle" : "Yeni paket";
+    pv("plan-id").value = plan ? plan.id : "";
+    pv("plan-name").value = plan ? plan.name : "";
+    pv("plan-desc").value = plan ? plan.description : "";
+    pv("plan-quota").value = plan ? plan.monthly_quota : 5;
+    pv("plan-price-m").value = plan ? Number(plan.price_monthly) : 0;
+    pv("plan-price-y").value = plan ? Number(plan.price_yearly) : 0;
+    pv("plan-order").value = plan ? plan.sort_order : allPlans.length;
+    pv("plan-active").checked = plan ? plan.is_active : true;
+    pv("plan-default").checked = plan ? plan.is_default : false;
+    planOverlay.classList.remove("hidden"); planOverlay.classList.add("flex");
+  }
+  function closePlanModal() { planOverlay.classList.add("hidden"); planOverlay.classList.remove("flex"); }
+  pv("plan-close").addEventListener("click", closePlanModal);
+  planOverlay.addEventListener("click", (e) => { if (e.target === planOverlay) closePlanModal(); });
+  pv("plan-new").addEventListener("click", () => openPlanModal(null));
+  pv("plan-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const id = pv("plan-id").value;
+    const body = {
+      name: pv("plan-name").value.trim(),
+      description: pv("plan-desc").value.trim(),
+      monthlyQuota: Number(pv("plan-quota").value),
+      priceMonthly: Number(pv("plan-price-m").value),
+      priceYearly: Number(pv("plan-price-y").value),
+      sortOrder: Number(pv("plan-order").value),
+      isActive: pv("plan-active").checked,
+      isDefault: pv("plan-default").checked
+    };
+    try {
+      if (id) await api(`/api/admin/plans/${id}`, { method: "PUT", body });
+      else await api("/api/admin/plans", { method: "POST", body });
+      closePlanModal(); await loadPlans(); await loadUsers();
+    } catch (err) {
+      const el = pv("plan-error"); el.textContent = err.message; el.classList.remove("hidden");
+    }
+  });
+
   // Baslangic: yetki kontrolu
   (async () => {
     try {
@@ -174,6 +289,7 @@
       }
       gate.classList.add("hidden");
       panel.classList.remove("hidden");
+      await loadPlans(); // once planlar (kullanici satirlarindaki select icin)
       await Promise.all([loadStats(), loadUsers()]);
     } catch (err) {
       gate.innerHTML = `<p class="text-muted">Yüklenemedi: ${esc(err.message)}</p>`;

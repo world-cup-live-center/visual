@@ -14,6 +14,8 @@ const db = require("./db");
 const authModule = require("./lib/auth");
 const presetsModule = require("./lib/presets");
 const adminModule = require("./lib/admin");
+const billingModule = require("./lib/billing");
+const quota = require("./lib/quota");
 
 // ffmpeg, gorunur CPU sayisi kadar thread acar. Railway gibi cok-cekirdek goren
 // ama RAM'i kisitli konteynerlerde bu, ProRes encode sirasinda bellegi tasirip
@@ -113,6 +115,40 @@ const ffprobePath = resolveBinary([
   findWinGetBinary("ffprobe.exe"),
   "ffprobe"
 ]);
+
+// --- Watermark (kota dolunca export'a basilir) ---
+const WATERMARK_TEXT = process.env.WATERMARK_TEXT || "ritimstudyo";
+
+function resolveFontFile() {
+  const candidates = [
+    process.env.WATERMARK_FONT,
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+    "C:\\Windows\\Fonts\\arialbd.ttf",
+    "C:\\Windows\\Fonts\\arial.ttf"
+  ].filter(Boolean);
+  for (const c of candidates) {
+    try { if (fs.existsSync(c)) return c; } catch {}
+  }
+  return null;
+}
+const WATERMARK_FONT = resolveFontFile();
+
+// drawtext icin font yolunu kacir (Windows'ta ":" ve "\" ozel karakter).
+function escapeFontPath(p) {
+  return p.replace(/\\/g, "/").replace(/:/g, "\\:");
+}
+
+// Filigran drawtext filtresi. Font bulunamazsa null (watermark atlanir).
+function watermarkFilter() {
+  if (!WATERMARK_FONT) return null;
+  const font = escapeFontPath(WATERMARK_FONT);
+  const text = WATERMARK_TEXT.replace(/[\\:']/g, "");
+  return `drawtext=fontfile='${font}':text='${text}':fontcolor=white@0.5:fontsize=h/18:` +
+    `x=w-tw-24:y=h-th-24:box=1:boxcolor=black@0.25:boxborderw=10`;
+}
 
 function collectRequestBody(request, maxBytes = MAX_UPLOAD_BYTES) {
   return new Promise((resolve, reject) => {
@@ -246,6 +282,7 @@ async function transcodeRecording(inputBuffer, options = {}) {
         ? "transparent"
         : "standard";
   const baseName = slugify(options.basename || "visualizer");
+  const wm = options.watermark ? watermarkFilter() : null; // kota dolduysa filigran
   const token = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
   const inputFile = path.join(TEMP_EXPORT_DIR, `${token}.webm`);
   const matteFile = mode === "transparent-dual" ? path.join(TEMP_EXPORT_DIR, `${token}-matte.webm`) : null;
@@ -271,7 +308,9 @@ async function transcodeRecording(inputBuffer, options = {}) {
         );
       }
 
-      const filterComplex = "[1:v]format=gray[alpha];[0:v][alpha]alphamerge[outv]";
+      const filterComplex = wm
+        ? `[1:v]format=gray[alpha];[0:v][alpha]alphamerge[wmv];[wmv]${wm}[outv]`
+        : "[1:v]format=gray[alpha];[0:v][alpha]alphamerge[outv]";
       await runProcess(ffmpegPath, [
         "-y", "-i", inputFile, "-i", matteFile,
         "-filter_complex", filterComplex,
@@ -291,26 +330,28 @@ async function transcodeRecording(inputBuffer, options = {}) {
       if (!alphaAvailable) {
         throw Object.assign(new Error("Tarayici bu kayitta alpha kanali uretmedi."), { code: "ALPHA_UNAVAILABLE" });
       }
-      await runProcess(ffmpegPath, [
-        "-y", "-i", inputFile,
-        "-threads", FFMPEG_THREADS,
+      const alphaArgs = ["-y", "-i", inputFile, "-threads", FFMPEG_THREADS];
+      if (wm) alphaArgs.push("-vf", wm);
+      alphaArgs.push(
         "-c:v", "prores_ks", "-profile:v", "4",
         "-pix_fmt", "yuva444p10le", "-qscale:v", "20",
         "-c:a", "aac", "-b:a", "256k",
         outputFile
-      ]);
+      );
+      await runProcess(ffmpegPath, alphaArgs);
       return { outputFile, downloadName: `${baseName}-alpha.mov`, mimeType: "video/quicktime" };
     }
 
-    await runProcess(ffmpegPath, [
-      "-y", "-i", inputFile,
-      "-threads", FFMPEG_THREADS,
+    const mp4Args = ["-y", "-i", inputFile, "-threads", FFMPEG_THREADS];
+    if (wm) mp4Args.push("-vf", wm);
+    mp4Args.push(
       "-c:v", "libx264", "-preset", "slow", "-crf", "12",
       "-pix_fmt", "yuv420p",
       "-c:a", "aac", "-b:a", "320k",
       "-movflags", "+faststart",
       outputFile
-    ]);
+    );
+    await runProcess(ffmpegPath, mp4Args);
 
     return { outputFile, downloadName: `${baseName}.mp4`, mimeType: "video/mp4" };
   } catch (error) {
@@ -333,7 +374,23 @@ async function handleTranscode(request, response) {
           ? "transparent"
           : "standard";
     const basename = request.query.basename || "visualizer";
-    const result = await transcodeRecording(inputBuffer, { mode, basename });
+
+    // Kota: dolduysa filigran bas, dolmadiysa temiz uret + sayaci artir.
+    let quotaStatus = null;
+    let watermark = false;
+    try {
+      quotaStatus = await quota.getQuotaStatus(request.authUser);
+      watermark = quotaStatus.watermark;
+    } catch (quotaError) {
+      console.warn("[transcode] kota okunamadi:", quotaError.message);
+    }
+
+    const result = await transcodeRecording(inputBuffer, { mode, basename, watermark });
+
+    if (!watermark && quotaStatus) {
+      quota.incrementUsage(request.authUser.id, quotaStatus.periodStart)
+        .catch((e) => console.warn("[transcode] kota artirilamadi:", e.message));
+    }
 
     const { size } = await fs.promises.stat(result.outputFile);
     response.writeHead(200, {
@@ -341,7 +398,8 @@ async function handleTranscode(request, response) {
       "Content-Disposition": `attachment; filename="${result.downloadName}"`,
       "Content-Length": size,
       "Content-Type": result.mimeType,
-      "X-Download-Name": result.downloadName
+      "X-Download-Name": result.downloadName,
+      "X-Watermarked": watermark ? "1" : "0"
     });
 
     const fileStream = fs.createReadStream(result.outputFile);
@@ -428,6 +486,7 @@ const jsonParser = express.json({ limit: "1mb" });
 app.use("/api/auth", jsonParser, authModule.router);
 app.use("/api/presets", jsonParser, presetsModule.router);
 app.use("/api/admin", jsonParser, adminModule.router);
+app.use("/api", billingModule.router);
 
 // Bozuk JSON govdesi icin temiz hata.
 app.use("/api", (err, req, res, next) => {

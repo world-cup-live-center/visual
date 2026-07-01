@@ -66,11 +66,67 @@ CREATE TABLE IF NOT EXISTS presets (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (user_id, name)
 );
+
+-- Abonelik paketleri (admin panelinden yonetilir)
+CREATE TABLE IF NOT EXISTS plans (
+  id                 BIGSERIAL PRIMARY KEY,
+  name               TEXT NOT NULL,
+  description        TEXT NOT NULL DEFAULT '',
+  monthly_quota      INT NOT NULL DEFAULT 0,        -- ayda temiz (watermark'siz) export adedi
+  price_monthly      NUMERIC(10,2) NOT NULL DEFAULT 0,
+  price_yearly       NUMERIC(10,2) NOT NULL DEFAULT 0,
+  currency           TEXT NOT NULL DEFAULT 'TRY',
+  is_active          BOOLEAN NOT NULL DEFAULT TRUE,
+  is_default         BOOLEAN NOT NULL DEFAULT FALSE,
+  sort_order         INT NOT NULL DEFAULT 0,
+  iyzico_ref_monthly TEXT,
+  iyzico_ref_yearly  TEXT,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Kullanicinin etkin plani (null ise varsayilan plan gecerli)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_id BIGINT REFERENCES plans (id) ON DELETE SET NULL;
+
+-- Donem bazli temiz export kullanimi (donem baslangici kayit tarihine gore)
+CREATE TABLE IF NOT EXISTS usage_counters (
+  user_id       BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  period_start  DATE NOT NULL,
+  clean_exports INT NOT NULL DEFAULT 0,
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, period_start)
+);
+
+-- Genel ayarlar (iyzico anahtarlari vb. — panelden girilir)
+CREATE TABLE IF NOT EXISTS app_settings (
+  key        TEXT PRIMARY KEY,
+  value      TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
+
+const SEED_PLANS = [
+  { name: "Ücretsiz",  desc: "Aylık 5 temiz export",  quota: 5,  m: 0,   y: 0,    def: true,  order: 0 },
+  { name: "Başlangıç", desc: "Aylık 10 temiz export", quota: 10, m: 100, y: 1000, def: false, order: 1 },
+  { name: "Pro",       desc: "Aylık 20 temiz export", quota: 20, m: 175, y: 1750, def: false, order: 2 }
+];
+
+async function seedPlans() {
+  const { rows } = await pool.query("SELECT COUNT(*)::int AS n FROM plans");
+  if (rows[0].n > 0) return;
+  for (const p of SEED_PLANS) {
+    await pool.query(
+      `INSERT INTO plans (name, description, monthly_quota, price_monthly, price_yearly, is_default, sort_order)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [p.name, p.desc, p.quota, p.m, p.y, p.def, p.order]
+    );
+  }
+  console.log("[db] varsayilan paketler olusturuldu.");
+}
 
 async function initSchema() {
   if (!pool) return false;
   await pool.query(SCHEMA_SQL);
+  await seedPlans();
   ready = true;
   console.log("[db] sema hazir.");
   return true;

@@ -352,6 +352,11 @@ const state = {
 const bpmTracker = { times: [], lastHigh: false, value: 0, lastBeat: 0 };
 let _customPaletteCache = null;
 
+// Preset'ler bellekteki kopyada tutulur; oturum acilinca sunucudan yuklenir.
+// initialize() -> renderPresetList() bunu erken kullandigi icin burada (cagridan
+// once) tanimlanmali; yoksa TDZ ReferenceError olur.
+let presetCache = {};
+
 initialize();
 
 function initialize() {
@@ -3239,10 +3244,8 @@ function syncCustomPaletteVisibility() {
 }
 
 // ── Presetler ────────────────────────────────────────────────────────────────
-// Preset'ler artik sunucuda, kullaniciya ozel saklanir. presetCache bellekteki kopyadir;
-// oturum acilinca /api/presets'ten yuklenir, misafirde bostur.
-let presetCache = {};
-
+// Preset'ler artik sunucuda, kullaniciya ozel saklanir. presetCache (yukarida
+// initialize'dan once tanimli) bellekteki kopyadir; oturum acilinca yuklenir.
 async function reloadPresetsFromServer() {
   if (!window.MosAuth || !window.MosAuth.isAuthed()) {
     presetCache = {};

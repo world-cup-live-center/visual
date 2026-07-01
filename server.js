@@ -407,7 +407,10 @@ function serveStaticFile(req, res) {
       const code = error.code === "ENOENT" ? 404 : 500;
       return res.status(code).json({ error: code === 404 ? "Dosya bulunamadi." : "Dosya okunamadi." });
     }
-    res.writeHead(200, { "Content-Type": contentType });
+    // HTML/JS/CSS her deploy'da tazelensin (eski onbellek app.js'i tutmasin);
+    // gorsel/font'lar kisa sureli onbelleklenebilir.
+    const cacheControl = /\.(html|js|css)$/i.test(filePath) ? "no-cache" : "public, max-age=3600";
+    res.writeHead(200, { "Content-Type": contentType, "Cache-Control": cacheControl });
     res.end(fileBuffer);
   });
 }

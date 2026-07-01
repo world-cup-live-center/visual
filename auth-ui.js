@@ -31,7 +31,9 @@
   const views = {
     login: document.getElementById("auth-view-login"),
     register: document.getElementById("auth-view-register"),
-    verify: document.getElementById("auth-view-verify")
+    verify: document.getElementById("auth-view-verify"),
+    forgot: document.getElementById("auth-view-forgot"),
+    reset: document.getElementById("auth-view-reset")
   };
   const titleEl = document.getElementById("auth-title");
   const subtitleEl = document.getElementById("auth-subtitle");
@@ -75,12 +77,18 @@
     tabsWrap.querySelectorAll(".auth-tab").forEach((btn) => {
       btn.classList.toggle("auth-tab-active", btn.dataset.authTab === name);
     });
+    const tabless = name === "verify" || name === "forgot" || name === "reset";
+    tabsWrap.classList.toggle("hidden", tabless);
     if (name === "verify") {
-      tabsWrap.classList.add("hidden");
       titleEl.textContent = "E-postani dogrula";
       subtitleEl.textContent = "Gelen kutunu (ve spam klasorunu) kontrol et.";
+    } else if (name === "forgot") {
+      titleEl.textContent = "Şifreni sıfırla";
+      subtitleEl.textContent = "E-postana bir sıfırlama kodu göndereceğiz.";
+    } else if (name === "reset") {
+      titleEl.textContent = "Yeni şifre belirle";
+      subtitleEl.textContent = "Gelen kutunu (ve spam klasorunu) kontrol et.";
     } else {
-      tabsWrap.classList.remove("hidden");
       titleEl.textContent = name === "register" ? "Ucretsiz hesap oluştur" : "Hesabına giriş yap";
       subtitleEl.textContent = name === "register"
         ? "E-posta ile kayıt ol; sana bir doğrulama kodu göndereceğiz."
@@ -258,6 +266,60 @@
       }
     } finally {
       btn.disabled = false;
+    }
+  });
+
+  // SIFREMI UNUTTUM
+  document.getElementById("forgot-link").addEventListener("click", () => showView("forgot"));
+  document.getElementById("forgot-back").addEventListener("click", () => showView("login"));
+
+  views.forgot.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearErrors();
+    const email = document.getElementById("forgot-email").value.trim();
+    const btn = views.forgot.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    try {
+      const res = await api("/api/auth/forgot", { method: "POST", body: { email } });
+      pendingEmail = email;
+      document.getElementById("reset-email-label").textContent = email;
+      showView("reset");
+      if (res.emailDelivered === false) {
+        showError("reset", "Kayıtlıysa kod gönderildi. Gelmezse birazdan tekrar dene.");
+      }
+      document.getElementById("reset-code").focus();
+    } catch (err) {
+      showError("forgot", err.message);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  views.reset.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearErrors();
+    const code = document.getElementById("reset-code").value.trim();
+    const password = document.getElementById("reset-password").value;
+    const btn = views.reset.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    try {
+      const res = await api("/api/auth/reset", { method: "POST", body: { email: pendingEmail, code, password } });
+      setUser(res.user);
+      closeModal();
+    } catch (err) {
+      showError("reset", err.message);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById("reset-resend").addEventListener("click", async () => {
+    clearErrors();
+    try {
+      await api("/api/auth/forgot", { method: "POST", body: { email: pendingEmail } });
+      showError("reset", "Yeni kod gonderildi.");
+    } catch (err) {
+      showError("reset", err.message);
     }
   });
 

@@ -938,6 +938,7 @@
           </div>
           <p class="auth-error hidden rounded-lg border border-accent/30 bg-accent/10 px-3 py-2 text-xs text-accent"></p>
           <button type="submit" class="btn btn-primary mt-1 w-full">Giriş yap</button>
+          <button type="button" id="forgot-link" class="mt-0.5 text-xs text-muted underline transition hover:text-cream">Şifremi unuttum?</button>
         </form>
 
         <!-- KAYIT -->
@@ -967,6 +968,33 @@
           <p class="auth-error hidden rounded-lg border border-accent/30 bg-accent/10 px-3 py-2 text-xs text-accent"></p>
           <button type="submit" class="btn btn-primary w-full">Doğrula ve giriş yap</button>
           <button type="button" id="verify-resend" class="text-xs text-muted underline transition hover:text-cream">Kod gelmedi mi? Tekrar gönder</button>
+        </form>
+
+        <!-- SIFREMI UNUTTUM — e-posta iste -->
+        <form id="auth-view-forgot" class="auth-view hidden flex-col gap-3">
+          <p class="text-sm leading-relaxed text-muted">Hesabının e-posta adresini gir; sana bir sıfırlama kodu göndereceğiz.</p>
+          <div>
+            <label class="field-label" for="forgot-email">E-posta</label>
+            <input id="forgot-email" type="email" class="ctl !pr-3.5" placeholder="ornek@mail.com" autocomplete="email" required />
+          </div>
+          <p class="auth-error hidden rounded-lg border border-accent/30 bg-accent/10 px-3 py-2 text-xs text-accent"></p>
+          <button type="submit" class="btn btn-primary w-full">Sıfırlama kodu gönder</button>
+          <button type="button" id="forgot-back" class="text-xs text-muted underline transition hover:text-cream">← Girişe dön</button>
+        </form>
+
+        <!-- SIFRE SIFIRLA — kod + yeni sifre -->
+        <form id="auth-view-reset" class="auth-view hidden flex-col gap-3">
+          <p class="text-sm leading-relaxed text-muted">
+            <strong id="reset-email-label" class="text-cream"></strong> adresine 6 haneli bir kod gönderdik. Kodu ve yeni şifreni gir:
+          </p>
+          <input id="reset-code" type="text" inputmode="numeric" maxlength="6" class="ctl !pr-3.5 text-center text-2xl tracking-[0.5em]" placeholder="______" />
+          <div>
+            <label class="field-label" for="reset-password">Yeni şifre (en az 8 karakter)</label>
+            <input id="reset-password" type="password" class="ctl !pr-3.5" placeholder="••••••••" autocomplete="new-password" required />
+          </div>
+          <p class="auth-error hidden rounded-lg border border-accent/30 bg-accent/10 px-3 py-2 text-xs text-accent"></p>
+          <button type="submit" class="btn btn-primary w-full">Şifreyi güncelle ve giriş yap</button>
+          <button type="button" id="reset-resend" class="text-xs text-muted underline transition hover:text-cream">Kod gelmedi mi? Tekrar gönder</button>
         </form>
       </div>
     </div>

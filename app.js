@@ -3280,7 +3280,7 @@ async function refreshQuota() {
   if (!dom.quotaBadge) return;
   if (!window.MosAuth || !window.MosAuth.isAuthed()) {
     dom.quotaBadge.hidden = true;
-    if (planMini) planMini.textContent = "";
+    if (planMini) planMini.textContent = "Kotanı büyüt, filigransız export al";
     return;
   }
   try {

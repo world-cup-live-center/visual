@@ -231,7 +231,9 @@
             const periodTxt = sub.period === "yearly" ? "yıllık" : "aylık";
             document.getElementById("my-sub-info").textContent =
               sub.status === "active"
-                ? `Abonelik: aktif (${periodTxt}) · Yenileme: ${endTxt}`
+                ? (sub.autoRenew
+                    ? `Abonelik: aktif (${periodTxt}) · Yenileme: ${endTxt}`
+                    : `Paketin ${endTxt} tarihine kadar aktif (${periodTxt}) · otomatik yenilenmez`)
                 : sub.status === "canceled"
                   ? `Abonelik iptal edildi · ${endTxt} tarihine kadar aktif`
                   : `Abonelik durumu: ${sub.status}`;

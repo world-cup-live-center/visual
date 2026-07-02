@@ -125,6 +125,9 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions (user_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_ref  ON subscriptions (iyzico_subscription_ref);
 
+-- Tek seferlik odeme modu: abonelik referansi olmaz, odeme kaydi tutulur.
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS iyzico_payment_id TEXT;
+
 -- Odeme formu oturumlari: iyzico callback'i cookie tasimadigindan token->kullanici esler.
 CREATE TABLE IF NOT EXISTS checkout_sessions (
   token      TEXT PRIMARY KEY,
@@ -134,6 +137,7 @@ CREATE TABLE IF NOT EXISTS checkout_sessions (
   consumed   BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE checkout_sessions ADD COLUMN IF NOT EXISTS mode TEXT NOT NULL DEFAULT 'onetime';
 `;
 
 const SEED_PLANS = [

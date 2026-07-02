@@ -281,6 +281,7 @@
       const d = await api("/api/admin/settings");
       pv("iyz-key").value = d.iyzico.apiKey || "";
       pv("iyz-sandbox").checked = d.iyzico.sandbox;
+      pv("iyz-sub-enabled").checked = Boolean(d.iyzico.subscriptionEnabled);
       pv("iyz-secret-hint").textContent = d.iyzico.secretSet
         ? "Kayıtlı: " + d.iyzico.secretHint + " · değiştirmek için yeni gir"
         : "Henüz girilmedi";
@@ -292,7 +293,8 @@
       await api("/api/admin/settings", { method: "POST", body: {
         apiKey: pv("iyz-key").value.trim(),
         secret: pv("iyz-secret").value,
-        sandbox: pv("iyz-sandbox").checked
+        sandbox: pv("iyz-sandbox").checked,
+        subscriptionEnabled: pv("iyz-sub-enabled").checked
       }});
       pv("iyz-secret").value = "";
       status.textContent = "Kaydedildi ✓";

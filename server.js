@@ -136,6 +136,12 @@ function resolveFontFile() {
 }
 const WATERMARK_FONT = resolveFontFile();
 
+// Logo+yazi bir arada olan hazir filigran gorseli (MP4 overlay icin).
+const WATERMARK_IMAGE = path.join(ROOT_DIR, "assets", "watermark.png");
+function watermarkImage() {
+  try { return fs.existsSync(WATERMARK_IMAGE) ? WATERMARK_IMAGE : null; } catch { return null; }
+}
+
 // drawtext icin font yolunu kacir (Windows'ta ":" ve "\" ozel karakter).
 function escapeFontPath(p) {
   return p.replace(/\\/g, "/").replace(/:/g, "\\:");
@@ -282,7 +288,10 @@ async function transcodeRecording(inputBuffer, options = {}) {
         ? "transparent"
         : "standard";
   const baseName = slugify(options.basename || "visualizer");
-  const wm = options.watermark ? watermarkFilter() : null; // kota dolduysa filigran
+  // Kota dolduysa filigran: MP4'te logo+yazi PNG overlay; saydam modlarda (alpha'yi
+  // bozmamak icin) drawtext yazi filigrani.
+  const wmText = options.watermark ? watermarkFilter() : null;
+  const wmImg = options.watermark ? watermarkImage() : null;
   const fps = String(Math.max(24, Math.min(60, Number(options.fps) || 30))); // CFR hedef kare hizi
   const token = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
   const inputFile = path.join(TEMP_EXPORT_DIR, `${token}.webm`);
@@ -309,8 +318,8 @@ async function transcodeRecording(inputBuffer, options = {}) {
         );
       }
 
-      const filterComplex = wm
-        ? `[1:v]format=gray[alpha];[0:v][alpha]alphamerge[wmv];[wmv]${wm}[outv]`
+      const filterComplex = wmText
+        ? `[1:v]format=gray[alpha];[0:v][alpha]alphamerge[wmv];[wmv]${wmText}[outv]`
         : "[1:v]format=gray[alpha];[0:v][alpha]alphamerge[outv]";
       await runProcess(ffmpegPath, [
         "-y", "-i", inputFile, "-i", matteFile,
@@ -333,7 +342,7 @@ async function transcodeRecording(inputBuffer, options = {}) {
         throw Object.assign(new Error("Tarayici bu kayitta alpha kanali uretmedi."), { code: "ALPHA_UNAVAILABLE" });
       }
       const alphaArgs = ["-y", "-i", inputFile, "-threads", FFMPEG_THREADS];
-      if (wm) alphaArgs.push("-vf", wm);
+      if (wmText) alphaArgs.push("-vf", wmText);
       alphaArgs.push(
         "-r", fps, "-fps_mode", "cfr",
         "-c:v", "prores_ks", "-profile:v", "4",
@@ -345,8 +354,19 @@ async function transcodeRecording(inputBuffer, options = {}) {
       return { outputFile, downloadName: `${baseName}-alpha.mov`, mimeType: "video/quicktime" };
     }
 
-    const mp4Args = ["-y", "-i", inputFile, "-threads", FFMPEG_THREADS];
-    if (wm) mp4Args.push("-vf", wm);
+    const mp4Args = ["-y", "-i", inputFile];
+    if (wmImg) mp4Args.push("-i", WATERMARK_IMAGE);
+    mp4Args.push("-threads", FFMPEG_THREADS);
+    if (wmImg) {
+      // Logo+yazi PNG'sini video yuksekliginin ~1/12'sine olcekle, sag-alta bindir.
+      mp4Args.push(
+        "-filter_complex",
+        "[1:v][0:v]scale2ref=w=-1:h=main_h/12[wm][base];[base][wm]overlay=W-w-24:H-h-24[outv]",
+        "-map", "[outv]", "-map", "0:a?"
+      );
+    } else if (wmText) {
+      mp4Args.push("-vf", wmText);
+    }
     mp4Args.push(
       "-r", fps, "-fps_mode", "cfr",
       "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",

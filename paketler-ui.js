@@ -73,7 +73,7 @@
     <div class="relative flex flex-col rounded-2xl border ${featured ? "border-accent/50 bg-accent/[0.05] shadow-[0_0_40px_rgba(232,23,42,0.15)]" : "border-white/10 bg-white/[0.02]"} p-6" data-plan-id="${p.id}">
       ${featured ? '<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-accent to-accent2 px-3 py-0.5 text-[0.7rem] font-bold text-white">Popüler</span>' : ""}
       <h3 class="font-display text-xl font-bold">${esc(p.name)}</h3>
-      <p class="mt-1 text-sm text-muted">${esc(p.description)}</p>
+      <p class="mt-1 text-sm text-muted">${esc(p.description || ("Aylık " + p.monthly_quota + " temiz export"))}</p>
       ${priceBlock(p)}
       <ul class="mt-5 flex-1 space-y-2 text-sm">
         <li class="flex items-start gap-2"><span class="text-mint">✓</span> Ayda <strong>${p.monthly_quota}</strong> temiz (filigransız) export</li>

@@ -198,7 +198,7 @@
       ? ' <span class="rounded px-1.5 py-0.5 text-[0.7rem]" style="background:rgba(255,77,96,.15);color:#ff8a97">Varsayılan</span>'
       : "";
     return `<tr class="border-t border-white/5" data-id="${p.id}">
-      <td class="px-3 py-2.5"><div class="font-semibold">${esc(p.name)}${badge}</div><div class="text-xs text-muted">${esc(p.description)}</div></td>
+      <td class="px-3 py-2.5"><div class="font-semibold">${esc(p.name)}${badge}</div><div class="text-xs text-muted">${esc(p.description || ("Aylık " + p.monthly_quota + " temiz export"))}</div></td>
       <td class="px-3 py-2.5">${p.monthly_quota}</td>
       <td class="px-3 py-2.5">${fmtPrice(p.price_monthly)}</td>
       <td class="px-3 py-2.5">${fmtPrice(p.price_yearly)}</td>

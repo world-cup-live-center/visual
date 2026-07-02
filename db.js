@@ -140,10 +140,11 @@ CREATE TABLE IF NOT EXISTS checkout_sessions (
 ALTER TABLE checkout_sessions ADD COLUMN IF NOT EXISTS mode TEXT NOT NULL DEFAULT 'onetime';
 `;
 
+// desc bos: arayuz "Aylık N temiz export" metnini kotadan turetir.
 const SEED_PLANS = [
-  { name: "Ücretsiz",  desc: "Aylık 5 temiz export",  quota: 5,  m: 0,   y: 0,    def: true,  order: 0 },
-  { name: "Başlangıç", desc: "Aylık 10 temiz export", quota: 10, m: 100, y: 1000, def: false, order: 1 },
-  { name: "Pro",       desc: "Aylık 20 temiz export", quota: 20, m: 175, y: 1750, def: false, order: 2 }
+  { name: "Ücretsiz",  desc: "", quota: 5,  m: 0,   y: 0,    def: true,  order: 0 },
+  { name: "Başlangıç", desc: "", quota: 10, m: 100, y: 1000, def: false, order: 1 },
+  { name: "Pro",       desc: "", quota: 20, m: 175, y: 1750, def: false, order: 2 }
 ];
 
 async function seedPlans() {
@@ -163,6 +164,9 @@ async function initSchema() {
   if (!pool) return false;
   await pool.query(SCHEMA_SQL);
   await seedPlans();
+  // Otomatik turetilen kalip aciklamalari temizle: bos aciklama, arayuzde
+  // "Aylık N temiz export" olarak kotadan turetilir (kota degisince guncel kalir).
+  await pool.query(`UPDATE plans SET description = '' WHERE description ~ '^Ayl(ı|i)k [0-9]+ temiz export$'`);
   ready = true;
   console.log("[db] sema hazir.");
   return true;

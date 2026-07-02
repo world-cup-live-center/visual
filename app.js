@@ -3276,15 +3276,18 @@ function syncCustomPaletteVisibility() {
 // initialize'dan once tanimli) bellekteki kopyadir; oturum acilinca yuklenir.
 // Kota rozeti: bu donem kalan temiz (filigransiz) export sayisi.
 async function refreshQuota() {
+  const planMini = document.getElementById("plan-mini");
   if (!dom.quotaBadge) return;
   if (!window.MosAuth || !window.MosAuth.isAuthed()) {
     dom.quotaBadge.hidden = true;
+    if (planMini) planMini.textContent = "";
     return;
   }
   try {
     const res = await fetch("/api/me/plan", { credentials: "same-origin" });
     if (!res.ok) { dom.quotaBadge.hidden = true; return; }
     const d = await res.json();
+    if (planMini) planMini.textContent = `Planın: ${d.plan.name} · ${d.remaining}/${d.quota}`;
     dom.quotaBadge.hidden = false;
     if (d.remaining > 0) {
       dom.quotaBadge.textContent = `Temiz export: ${d.remaining}/${d.quota}`;

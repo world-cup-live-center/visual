@@ -98,10 +98,40 @@
       <!-- Ödeme Ayarları (iyzico) -->
       <section class="mb-10">
         <div class="mb-3">
-          <h2 class="font-display text-lg">Ödeme Ayarları (iyzico)</h2>
-          <p class="text-xs text-muted">Sandbox anahtarlarını gir. Faz 2'de abonelik ödemeleri için kullanılacak.</p>
+          <h2 class="font-display text-lg">Ödeme Ayarları</h2>
+          <p class="text-xs text-muted">Aktif sağlayıcıyı seç ve anahtarlarını gir. Ödemeler seçili sağlayıcı üzerinden alınır.</p>
         </div>
         <div class="grid max-w-2xl gap-3 rounded-xl border border-white/10 p-4">
+          <div>
+            <label class="field-label" for="pay-provider">Aktif ödeme sağlayıcı</label>
+            <select id="pay-provider" class="ctl !w-56">
+              <option value="iyzico">iyzico</option>
+              <option value="shopier">Shopier</option>
+            </select>
+          </div>
+
+          <div class="mt-2 border-t border-white/10 pt-3">
+            <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Shopier</p>
+            <div class="grid gap-3">
+              <div>
+                <label class="field-label" for="shp-key">Shopier API Key</label>
+                <input id="shp-key" class="ctl" placeholder="Shopier > Entegrasyonlar > API" autocomplete="off" />
+              </div>
+              <div>
+                <label class="field-label" for="shp-secret">Shopier API Secret</label>
+                <input id="shp-secret" type="password" class="ctl" placeholder="••••••••" autocomplete="off" />
+                <p id="shp-secret-hint" class="mt-1 text-xs text-muted"></p>
+              </div>
+              <p class="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-muted">
+                Shopier panelinde geri dönüş (callback) URL'si olarak şunu tanımla:<br>
+                <code class="text-mint">https://visual-production-b3fc.up.railway.app/api/shopier/callback</code>
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-2 border-t border-white/10 pt-3">
+            <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">iyzico</p>
+          </div>
           <div>
             <label class="field-label" for="iyz-key">API Key</label>
             <input id="iyz-key" class="ctl" placeholder="sandbox-xxxxxxxx" autocomplete="off" />

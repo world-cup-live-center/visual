@@ -140,6 +140,22 @@
     btn.textContent = "Hazırlanıyor…";
     try {
       const d = await api("/api/checkout", { method: "POST", body: { planId, period } });
+      if (d.provider === "shopier") {
+        // Shopier: imzali formu olusturup tam sayfa yonlendir.
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = d.action;
+        for (const [k, v] of Object.entries(d.fields || {})) {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = k;
+          input.value = v;
+          form.appendChild(input);
+        }
+        document.body.appendChild(form);
+        form.submit();
+        return;
+      }
       openPayModal(d.checkoutFormContent);
     } catch (err) {
       msg.textContent = err.code === "PAYMENT_NOT_READY"

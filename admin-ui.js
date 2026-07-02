@@ -279,9 +279,14 @@
   async function loadSettings() {
     try {
       const d = await api("/api/admin/settings");
+      pv("pay-provider").value = d.provider || "iyzico";
       pv("iyz-key").value = d.iyzico.apiKey || "";
       pv("iyz-sandbox").checked = d.iyzico.sandbox;
       pv("iyz-sub-enabled").checked = Boolean(d.iyzico.subscriptionEnabled);
+      pv("shp-key").value = (d.shopier && d.shopier.apiKey) || "";
+      pv("shp-secret-hint").textContent = d.shopier && d.shopier.secretSet
+        ? "Kayıtlı: " + d.shopier.secretHint + " · değiştirmek için yeni gir"
+        : "Henüz girilmedi";
       pv("iyz-secret-hint").textContent = d.iyzico.secretSet
         ? "Kayıtlı: " + d.iyzico.secretHint + " · değiştirmek için yeni gir"
         : "Henüz girilmedi";
@@ -294,9 +299,13 @@
         apiKey: pv("iyz-key").value.trim(),
         secret: pv("iyz-secret").value,
         sandbox: pv("iyz-sandbox").checked,
-        subscriptionEnabled: pv("iyz-sub-enabled").checked
+        subscriptionEnabled: pv("iyz-sub-enabled").checked,
+        shopierApiKey: pv("shp-key").value.trim(),
+        shopierSecret: pv("shp-secret").value,
+        provider: pv("pay-provider").value
       }});
       pv("iyz-secret").value = "";
+      pv("shp-secret").value = "";
       status.textContent = "Kaydedildi ✓";
       status.style.color = "#7ee6a8";
       await loadSettings();

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="tr" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>MoS Rhythm | Paketler</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png" />
+    <link rel="apple-touch-icon" href="assets/icon-180.png" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: { extend: { colors: {
+          accent: "#e8172a", accent2: "#b5101d", mint: "#ff4d60",
+          muted: "#7a7a7a", cream: "#ffffff", ink: "#050505"
+        }, fontFamily: { display: ["Constantia","Georgia","serif"], body: ["Bahnschrift",'"Trebuchet MS"',"Aptos","sans-serif"] } } }
+      };
+    </script>
+    <link rel="stylesheet" href="styles.css" />
+    <style type="text/tailwindcss">
+      .btn { @apply inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-cream transition duration-200 hover:border-accent/40 hover:bg-accent/10 focus-visible:border-accent/40 focus-visible:outline-none cursor-pointer; }
+      .btn-primary { @apply border-transparent bg-gradient-to-br from-accent to-accent2 font-bold text-white hover:from-[#ff1a2e] hover:to-accent; }
+      .chip { @apply rounded-full border border-white/10 bg-black/45 px-3 py-1 text-xs text-cream; }
+    </style>
+    <style>
+      .glow-text { text-shadow: 0 0 30px rgba(232, 23, 42, 0.55); }
+      .period-tab { color: #9a9aa5; }
+      .period-tab.period-active { background: rgba(232, 23, 42, 0.16); color: #fff; }
+    </style>
+  </head>
+  <body class="min-h-screen bg-ink font-body text-cream antialiased">
+    <div class="page-noise"></div>
+
+    <header class="border-b border-white/10 bg-black/60 backdrop-blur">
+      <div class="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
+        <a href="index.html" class="flex items-center gap-3 no-underline">
+          <img src="assets/favicon-32.png" alt="MoS Rhythm" width="30" height="30" style="border-radius:7px" />
+          <span class="font-display text-xl text-cream">MoS Rhythm</span>
+        </a>
+        <div class="flex items-center gap-2">
+          <span id="me-chip" class="chip hidden"></span>
+          <a href="index.html" class="btn">← Uygulamaya dön</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="relative z-10 mx-auto max-w-6xl px-5 py-12">
+      <!-- Baslik -->
+      <div class="mb-10 text-center">
+        <span class="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-mint">Paketler</span>
+        <h1 class="mt-1 font-display text-4xl font-bold glow-text">Sana uygun planı seç</h1>
+        <p class="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted">
+          Her pakette görselleştirme sınırsızdır. Kota, aylık <strong class="text-cream">temiz (filigransız) video export</strong> adedini belirler;
+          kota dolunca export'lar filigranlı çıkmaya devam eder.
+        </p>
+
+        <!-- Aylik / Yillik gecis -->
+        <div class="mt-7 inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
+          <button id="tab-monthly" type="button" class="period-tab rounded-full px-5 py-2 text-sm font-semibold transition">Aylık</button>
+          <button id="tab-yearly" type="button" class="period-tab rounded-full px-5 py-2 text-sm font-semibold transition">Yıllık <span class="ml-1 text-[0.7rem] text-mint" id="yearly-hint"></span></button>
+        </div>
+      </div>
+
+      <!-- Mevcut plan / kota durumu (girisliyse) -->
+      <div id="my-plan" class="mx-auto mb-10 hidden max-w-2xl rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 text-center text-sm">
+        <span class="text-muted">Mevcut planın:</span>
+        <strong id="my-plan-name" class="ml-1"></strong>
+        <span class="mx-2 text-white/20">·</span>
+        <span id="my-plan-quota" class="text-muted"></span>
+      </div>
+
+      <!-- Paket kartlari -->
+      <div id="plans-grid" class="grid gap-5 md:grid-cols-3">
+        <p id="plans-loading" class="col-span-full py-16 text-center text-muted">Paketler yükleniyor…</p>
+      </div>
+
+      <!-- SSS mini -->
+      <div class="mx-auto mt-14 max-w-2xl space-y-4">
+        <h2 class="text-center font-display text-xl font-bold">Sık sorulanlar</h2>
+        <div class="rounded-xl border border-white/10 bg-white/[0.02] px-5 py-4">
+          <strong class="text-sm">Kota dolunca ne olur?</strong>
+          <p class="mt-1 text-sm leading-relaxed text-muted">Export almaya devam edersin; videoların sağ-alt köşesine küçük bir "ritimstudyo" filigranı eklenir. Yeni dönemde kota otomatik yenilenir.</p>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/[0.02] px-5 py-4">
+          <strong class="text-sm">Kota ne zaman sıfırlanır?</strong>
+          <p class="mt-1 text-sm leading-relaxed text-muted">Üyelik tarihine göre her ay aynı gün otomatik sıfırlanır.</p>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/[0.02] px-5 py-4">
+          <strong class="text-sm">İstediğim zaman iptal edebilir miyim?</strong>
+          <p class="mt-1 text-sm leading-relaxed text-muted">Evet. İptal edersen dönem sonuna kadar paketin aktif kalır, sonrasında ücretsiz pakete geçersin.</p>
+        </div>
+      </div>
+    </main>
+
+    <footer class="border-t border-white/10 py-8 text-center text-xs text-muted">
+      MoS Rhythm · Fiyatlara KDV dahildir · Ödemeler iyzico güvencesiyle alınır
+    </footer>
+
+    <script src="paketler-ui.js"></script>
+  </body>
+</html>

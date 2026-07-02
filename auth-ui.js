@@ -327,6 +327,12 @@
   applyGate();
   renderAccount();
   api("/api/auth/me")
-    .then((data) => setUser(data.user))
+    .then((data) => {
+      setUser(data.user);
+      // Paketler sayfasindan "#kayit" ile gelen misafire kayit modalini ac.
+      if (!data.user && window.location.hash === "#kayit") {
+        openModal("register");
+      }
+    })
     .catch(() => setUser(null));
 })();

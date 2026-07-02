@@ -310,13 +310,20 @@
     out.classList.remove("hidden");
     out.textContent = "Test ediliyor…";
     try {
-      const r = await api("/api/admin/settings/test-iyzico");
-      out.textContent = (r.ok ? "✓ BAGLANTI BASARILI" : "✗ BASARISIZ") +
-        "\nOrtam: " + (r.env || "-") + " (" + (r.uri || "-") + ")" +
-        (r.error ? "\nHata: " + r.error : "") +
-        "\n\nHam cevap:\n" + JSON.stringify(r.raw || {}, null, 2).slice(0, 1500);
+      // Ham fetch: sunucudan donen her seyi (durum kodu + govde) oldugu gibi goster.
+      const resp = await fetch("/api/admin/settings/test-iyzico", { credentials: "same-origin", cache: "no-store" });
+      const text = await resp.text();
+      let pretty = text;
+      let header = "HTTP " + resp.status;
+      try {
+        const j = JSON.parse(text);
+        header = (j.ok ? "✓ BAGLANTI BASARILI" : "✗ BASARISIZ") + " · HTTP " + resp.status +
+          "\nOrtam: " + (j.env || "-") + (j.error ? "\nHata: " + j.error : "");
+        pretty = JSON.stringify(j.raw || j, null, 2);
+      } catch {}
+      out.textContent = header + "\n\nHam cevap:\n" + pretty.slice(0, 2000);
     } catch (e) {
-      out.textContent = "✗ Test istegi basarisiz: " + (e.message || "");
+      out.textContent = "✗ Test istegi atilamadi: " + (e.message || "");
     }
   });
 

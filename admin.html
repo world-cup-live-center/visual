@@ -95,6 +95,32 @@
         </div>
       </section>
 
+      <!-- Ödeme Ayarları (iyzico) -->
+      <section class="mb-10">
+        <div class="mb-3">
+          <h2 class="font-display text-lg">Ödeme Ayarları (iyzico)</h2>
+          <p class="text-xs text-muted">Sandbox anahtarlarını gir. Faz 2'de abonelik ödemeleri için kullanılacak.</p>
+        </div>
+        <div class="grid max-w-2xl gap-3 rounded-xl border border-white/10 p-4">
+          <div>
+            <label class="field-label" for="iyz-key">API Key</label>
+            <input id="iyz-key" class="ctl" placeholder="sandbox-xxxxxxxx" autocomplete="off" />
+          </div>
+          <div>
+            <label class="field-label" for="iyz-secret">Secret Key</label>
+            <input id="iyz-secret" type="password" class="ctl" placeholder="••••••••" autocomplete="off" />
+            <p id="iyz-secret-hint" class="mt-1 text-xs text-muted"></p>
+          </div>
+          <label class="flex items-center gap-2 text-sm">
+            <input id="iyz-sandbox" type="checkbox" class="h-4 w-4 accent-accent" checked /> Sandbox (test) modu
+          </label>
+          <div class="flex items-center gap-3">
+            <button id="iyz-save" type="button" class="btn btn-primary">Kaydet</button>
+            <span id="iyz-status" class="text-xs text-muted"></span>
+          </div>
+        </div>
+      </section>
+
       <div class="mb-3 flex items-center justify-between">
         <h2 class="font-display text-lg">Kullanıcılar</h2>
         <input id="search" type="text" placeholder="E-posta/ad ara…" class="ctl !w-64 !pr-3.5" />

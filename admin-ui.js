@@ -275,6 +275,36 @@
     }
   });
 
+  // ── Odeme ayarlari (iyzico) ──
+  async function loadSettings() {
+    try {
+      const d = await api("/api/admin/settings");
+      pv("iyz-key").value = d.iyzico.apiKey || "";
+      pv("iyz-sandbox").checked = d.iyzico.sandbox;
+      pv("iyz-secret-hint").textContent = d.iyzico.secretSet
+        ? "Kayıtlı: " + d.iyzico.secretHint + " · değiştirmek için yeni gir"
+        : "Henüz girilmedi";
+    } catch (e) { /* sessiz */ }
+  }
+  pv("iyz-save").addEventListener("click", async () => {
+    const status = pv("iyz-status");
+    try {
+      await api("/api/admin/settings", { method: "POST", body: {
+        apiKey: pv("iyz-key").value.trim(),
+        secret: pv("iyz-secret").value,
+        sandbox: pv("iyz-sandbox").checked
+      }});
+      pv("iyz-secret").value = "";
+      status.textContent = "Kaydedildi ✓";
+      status.style.color = "#7ee6a8";
+      await loadSettings();
+      setTimeout(() => { status.textContent = ""; status.style.color = ""; }, 2500);
+    } catch (e) {
+      status.textContent = e.message || "Kaydedilemedi";
+      status.style.color = "#ff8a97";
+    }
+  });
+
   // Baslangic: yetki kontrolu
   (async () => {
     try {
@@ -290,7 +320,7 @@
       gate.classList.add("hidden");
       panel.classList.remove("hidden");
       await loadPlans(); // once planlar (kullanici satirlarindaki select icin)
-      await Promise.all([loadStats(), loadUsers()]);
+      await Promise.all([loadStats(), loadUsers(), loadSettings()]);
     } catch (err) {
       gate.innerHTML = `<p class="text-muted">Yüklenemedi: ${esc(err.message)}</p>`;
     }

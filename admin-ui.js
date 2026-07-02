@@ -305,6 +305,21 @@
     }
   });
 
+  pv("iyz-test").addEventListener("click", async () => {
+    const out = pv("iyz-test-out");
+    out.classList.remove("hidden");
+    out.textContent = "Test ediliyor…";
+    try {
+      const r = await api("/api/admin/settings/test-iyzico");
+      out.textContent = (r.ok ? "✓ BAGLANTI BASARILI" : "✗ BASARISIZ") +
+        "\nOrtam: " + (r.env || "-") + " (" + (r.uri || "-") + ")" +
+        (r.error ? "\nHata: " + r.error : "") +
+        "\n\nHam cevap:\n" + JSON.stringify(r.raw || {}, null, 2).slice(0, 1500);
+    } catch (e) {
+      out.textContent = "✗ Test istegi basarisiz: " + (e.message || "");
+    }
+  });
+
   // Baslangic: yetki kontrolu
   (async () => {
     try {

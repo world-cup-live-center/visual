@@ -19,8 +19,9 @@
     let data = {};
     try { data = await res.json(); } catch {}
     if (!res.ok) {
-      const err = new Error(data.error || "Bir hata olustu.");
+      const err = new Error(data.error || `Sunucu hatası (${res.status}). Lütfen tekrar dene.`);
       err.code = data.code;
+      err.status = res.status;
       throw err;
     }
     return data;

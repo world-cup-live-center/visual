@@ -242,6 +242,20 @@ async function probeVideoAlpha(inputFile) {
   return hasAlphaPixelFormat(pixelFormat);
 }
 
+async function probeVideoHeight(inputFile) {
+  if (!ffprobePath) return null;
+  try {
+    const { stdout } = await runProcess(ffprobePath, [
+      "-v", "error", "-select_streams", "v:0",
+      "-show_entries", "stream=height", "-of", "json", inputFile
+    ]);
+    const h = JSON.parse(stdout)?.streams?.[0]?.height;
+    return Number.isFinite(h) ? h : null;
+  } catch {
+    return null;
+  }
+}
+
 function slugify(value) {
   return String(value || "visualizer")
     .toLowerCase()
@@ -358,10 +372,13 @@ async function transcodeRecording(inputBuffer, options = {}) {
     if (wmImg) mp4Args.push("-i", WATERMARK_IMAGE);
     mp4Args.push("-threads", FFMPEG_THREADS);
     if (wmImg) {
-      // Logo+yazi PNG'sini video yuksekliginin ~1/12'sine olcekle, sag-alta bindir.
+      // Filigran yuksekligini video yuksekliginin ~1/11'i olarak JS'te hesapla
+      // (scale2ref surumler arasi tutarsiz oldugundan probe + sabit px kullaniriz).
+      const vh = await probeVideoHeight(inputFile);
+      const targetH = Math.max(64, Math.round((vh || 1080) / 11));
       mp4Args.push(
         "-filter_complex",
-        "[1:v][0:v]scale2ref=w=-1:h=main_h/12[wm][base];[base][wm]overlay=W-w-24:H-h-24[outv]",
+        `[1:v]scale=-1:${targetH}[wm];[0:v][wm]overlay=W-w-28:H-h-28[outv]`,
         "-map", "[outv]", "-map", "0:a?"
       );
     } else if (wmText) {

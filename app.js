@@ -2667,7 +2667,7 @@ function setDownloadFile(blob, fileName, warningCode = "") {
 }
 
 function buildRecordingWarningMessage(code, detail) {
-  const extra = detail ? ` (${detail.substring(0, 120)})` : "";
+  const extra = detail ? ` (${detail.substring(0, 300)})` : "";
   if (code === "FFMPEG_MISSING") return `FFmpeg bulunamadi — ffmpeg yukle, sunucuyu yeniden baslat.${extra}`;
   if (code === "ALPHA_UNAVAILABLE") return `Alpha kanali uretilemedi. Chrome kullan.${extra}`;
   if (code === "TRANSCODE_ROUTE_MISSING") return `Sunucuya ulasilamadi — internet baglantini kontrol edip sayfayi yenile.${extra}`;

@@ -187,7 +187,9 @@ function runProcess(command, args) {
     child.on("error", reject);
     child.on("close", (exitCode) => {
       if (exitCode === 0) { resolve({ stdout, stderr }); return; }
-      reject(new Error(stderr.trim() || `${command} basarisiz oldu (${exitCode}).`));
+      // Gercek ffmpeg hatasi stderr'in SONUNDA olur (bas kismi banner/progress).
+      const tail = stderr.trim().split(/\r?\n/).filter(Boolean).slice(-6).join(" | ");
+      reject(new Error(tail || `${command} basarisiz oldu (${exitCode}).`));
     });
   });
 }

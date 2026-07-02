@@ -102,6 +102,38 @@ CREATE TABLE IF NOT EXISTS app_settings (
   value      TEXT,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- iyzico'da olusturulan fiyat planinin, olusturuldugu andaki fiyat kopyasi.
+-- Panelden fiyat degisirse yeni iyzico plani acilir (referans + kopya guncellenir).
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS iyzico_price_monthly NUMERIC(10,2);
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS iyzico_price_yearly  NUMERIC(10,2);
+
+-- Abonelikler (iyzico subscription karsiligi)
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id                      BIGSERIAL PRIMARY KEY,
+  user_id                 BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  plan_id                 BIGINT REFERENCES plans (id) ON DELETE SET NULL,
+  period                  TEXT NOT NULL DEFAULT 'monthly',      -- monthly | yearly
+  status                  TEXT NOT NULL DEFAULT 'active',       -- active | canceled | unpaid | expired | superseded
+  iyzico_subscription_ref TEXT,
+  current_period_start    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  current_period_end      TIMESTAMPTZ,
+  canceled_at             TIMESTAMPTZ,
+  created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at              TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions (user_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_ref  ON subscriptions (iyzico_subscription_ref);
+
+-- Odeme formu oturumlari: iyzico callback'i cookie tasimadigindan token->kullanici esler.
+CREATE TABLE IF NOT EXISTS checkout_sessions (
+  token      TEXT PRIMARY KEY,
+  user_id    BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  plan_id    BIGINT NOT NULL REFERENCES plans (id) ON DELETE CASCADE,
+  period     TEXT NOT NULL DEFAULT 'monthly',
+  consumed   BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
 
 const SEED_PLANS = [

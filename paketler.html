@@ -64,10 +64,16 @@
 
       <!-- Mevcut plan / kota durumu (girisliyse) -->
       <div id="my-plan" class="mx-auto mb-10 hidden max-w-2xl rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 text-center text-sm">
-        <span class="text-muted">Mevcut planın:</span>
-        <strong id="my-plan-name" class="ml-1"></strong>
-        <span class="mx-2 text-white/20">·</span>
-        <span id="my-plan-quota" class="text-muted"></span>
+        <div>
+          <span class="text-muted">Mevcut planın:</span>
+          <strong id="my-plan-name" class="ml-1"></strong>
+          <span class="mx-2 text-white/20">·</span>
+          <span id="my-plan-quota" class="text-muted"></span>
+        </div>
+        <div id="my-sub" class="mt-2 hidden text-xs text-muted">
+          <span id="my-sub-info"></span>
+          <button id="my-sub-cancel" type="button" class="ml-2 hidden text-accent underline transition hover:no-underline">Aboneliği iptal et</button>
+        </div>
       </div>
 
       <!-- Paket kartlari -->
@@ -96,6 +102,15 @@
     <footer class="border-t border-white/10 py-8 text-center text-xs text-muted">
       MoS Rhythm · Fiyatlara KDV dahildir · Ödemeler iyzico güvencesiyle alınır
     </footer>
+
+    <!-- Odeme modali (iyzico formu buraya yuklenir; form acik temali oldugundan zemin beyaz) -->
+    <div id="pay-overlay" class="fixed inset-0 z-[130] hidden items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
+      <div class="relative max-h-[92vh] w-[min(30rem,calc(100%-1rem))] overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl">
+        <button id="pay-close" type="button" class="absolute right-3 top-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/10 text-black transition hover:bg-black/20" aria-label="Kapat">✕</button>
+        <p id="pay-loading" class="py-10 text-center text-sm text-black/60">Ödeme formu yükleniyor…</p>
+        <div id="iyzipay-checkout-form" class="responsive"></div>
+      </div>
+    </div>
 
     <script src="paketler-ui.js"></script>
   </body>

@@ -138,7 +138,8 @@
     const oldText = btn.textContent;
     btn.textContent = "Hazırlanıyor…";
     try {
-      await api("/api/checkout", { method: "POST", body: { planId, period } });
+      const d = await api("/api/checkout", { method: "POST", body: { planId, period } });
+      openPayModal(d.checkoutFormContent);
     } catch (err) {
       msg.textContent = err.code === "PAYMENT_NOT_READY"
         ? "Ödeme sistemi çok yakında aktif olacak. 🎉 Şimdilik paketler bilgilendirme amaçlıdır."
@@ -147,6 +148,51 @@
     } finally {
       btn.disabled = false;
       btn.textContent = oldText;
+    }
+  });
+
+  // ── Odeme modali: iyzico checkoutFormContent script'ini calistirir ──
+  const payOverlay = document.getElementById("pay-overlay");
+
+  function openPayModal(formContent) {
+    document.getElementById("pay-loading").classList.remove("hidden");
+    document.getElementById("iyzipay-checkout-form").innerHTML = "";
+    payOverlay.classList.remove("hidden");
+    payOverlay.classList.add("flex");
+
+    // checkoutFormContent bir <script> parcasi; innerHTML ile calismaz,
+    // icerigini cikarip gercek script node'u olarak eklemek gerekir.
+    const codes = [];
+    const re = /<script[^>]*>([\s\S]*?)<\/script>/gi;
+    let m;
+    while ((m = re.exec(formContent)) !== null) codes.push(m[1]);
+    if (!codes.length && formContent.trim()) codes.push(formContent); // duz JS gelirse
+
+    for (const code of codes) {
+      const s = document.createElement("script");
+      s.text = code;
+      document.body.appendChild(s);
+    }
+    // Form render olunca yukleniyor yazisini gizle.
+    setTimeout(() => document.getElementById("pay-loading").classList.add("hidden"), 1500);
+  }
+
+  function closePayModal() {
+    payOverlay.classList.add("hidden");
+    payOverlay.classList.remove("flex");
+    document.getElementById("iyzipay-checkout-form").innerHTML = "";
+  }
+  document.getElementById("pay-close").addEventListener("click", closePayModal);
+
+  // ── Abonelik iptali ──
+  document.getElementById("my-sub-cancel").addEventListener("click", async () => {
+    if (!confirm("Aboneliğin iptal edilsin mi? Planın dönem sonuna kadar aktif kalır, sonrasında ücretsiz pakete geçersin.")) return;
+    try {
+      const d = await api("/api/subscription/cancel", { method: "POST", body: {} });
+      alert("Aboneliğin iptal edildi." + (d.activeUntil ? " Planın " + new Date(d.activeUntil).toLocaleDateString("tr-TR") + " tarihine kadar aktif." : ""));
+      window.location.reload();
+    } catch (err) {
+      alert(err.message || "İptal edilemedi.");
     }
   });
 
@@ -173,6 +219,23 @@
           document.getElementById("my-plan-name").textContent = myPlan.plan.name;
           document.getElementById("my-plan-quota").textContent =
             `Bu dönem kalan temiz export: ${myPlan.remaining}/${myPlan.quota}`;
+
+          const sub = myPlan.subscription;
+          if (sub) {
+            const box = document.getElementById("my-sub");
+            box.classList.remove("hidden");
+            const endTxt = sub.currentPeriodEnd
+              ? new Date(sub.currentPeriodEnd).toLocaleDateString("tr-TR")
+              : "-";
+            const periodTxt = sub.period === "yearly" ? "yıllık" : "aylık";
+            document.getElementById("my-sub-info").textContent =
+              sub.status === "active"
+                ? `Abonelik: aktif (${periodTxt}) · Yenileme: ${endTxt}`
+                : sub.status === "canceled"
+                  ? `Abonelik iptal edildi · ${endTxt} tarihine kadar aktif`
+                  : `Abonelik durumu: ${sub.status}`;
+            if (sub.cancelable) document.getElementById("my-sub-cancel").classList.remove("hidden");
+          }
         } catch {}
       }
       setPeriod("monthly");
